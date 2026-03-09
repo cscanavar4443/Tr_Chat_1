@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, push, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, push, onChildAdded, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const cfg = {
   apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
@@ -9,43 +9,92 @@ const cfg = {
 
 const app = initializeApp(cfg);
 const db = getDatabase(app);
-const messagesRef = ref(db, 'messages');
 
-const chatBox = document.getElementById('chat-box');
-const msgInput = document.getElementById('messageInput');
-const userBox = document.getElementById('username');
+// Global Değişkenler
+let currentUser = localStorage.getItem('chatNick') || "User_" + Math.floor(Math.random()*999);
+let currentRoom = "genel";
+const userUID = localStorage.getItem('userUID') || Math.random().toString(36).substring(7);
+localStorage.setItem('userUID', userUID);
 
-// Mesaj Gönder
-const sendMessage = () => {
-    const user = userBox.value.trim() || "Anonim";
-    const text = msgInput.value.trim();
-    
-    if (text) {
-        push(messagesRef, {
-            u: user,
-            m: text,
-            t: serverTimestamp()
+// Başlangıç Ayarları
+document.getElementById('myNickDisplay').innerText = currentUser;
+
+// Mesaj Gönderme
+window.sendMessage = (text) => {
+    const roomRef = ref(db, `rooms/${currentRoom}/messages`);
+    push(roomRef, {
+        u: currentUser,
+        m: text,
+        uid: userUID,
+        t: Date.now()
+    });
+};
+
+// Oda Oluşturma (Oluşturan Admin olur)
+window.createRoom = () => {
+    const roomName = prompt("Oda adı girin:");
+    if(roomName) {
+        const roomID = roomName.toLowerCase().replace(/\s/g, '-');
+        set(ref(db, `rooms/${roomID}/metadata`), {
+            admin: userUID,
+            name: roomName
         });
-        msgInput.value = "";
+        switchChannel(roomID);
     }
 };
 
-document.getElementById('sendBtn').onclick = sendMessage;
-msgInput.onkeypress = (e) => e.key === 'Enter' && sendMessage();
+// Kanal Değiştirme
+window.switchChannel = (id) => {
+    currentRoom = id;
+    document.getElementById('currentChannelName').innerText = "# " + id;
+    document.getElementById('messages').innerHTML = ""; // Ekranı temizle
+    listenMessages(id);
+};
 
-// Mesajları Dinle
-onChildAdded(messagesRef, (snap) => {
-    const data = snap.val();
-    const isMe = data.u === userBox.value;
-    const time = data.t ? new Date(data.t).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '';
+// Mesajları Dinleme
+function listenMessages(roomID) {
+    const roomRef = ref(db, `rooms/${roomID}`);
     
-    const html = `
-        <div class="msg ${isMe ? 'me' : ''}">
-            <small style="display:block; font-size:10px; opacity:0.7">${data.u}</small>
-            <span>${data.m}</span>
-            <small style="display:block; text-align:right; font-size:9px; margin-top:4px">${time}</small>
-        </div>`;
-    
-    chatBox.innerHTML += html;
-    chatBox.scrollTop = chatBox.scrollHeight;
-});
+    // Önce admini öğren
+    let adminID = "";
+    onValue(ref(db, `rooms/${roomID}/metadata/admin`), (s) => adminID = s.val());
+
+    onChildAdded(ref(db, `rooms/${roomID}/messages`), (snap) => {
+        const d = snap.val();
+        const isAdmin = d.uid === adminID && roomID !== 'genel';
+        
+        const html = `
+            <div class="msg-item">
+                <span class="msg-author">${d.u}</span>
+                ${isAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}
+                <span class="msg-body">${d.m}</span>
+            </div>`;
+        const box = document.getElementById('messages');
+        box.innerHTML += html;
+        box.scrollTop = box.scrollHeight;
+    });
+}
+
+// Event Listeners
+document.getElementById('msgInput').onkeypress = (e) => {
+    if(e.key === 'Enter') {
+        sendMessage(e.target.value);
+        e.target.value = "";
+    }
+};
+
+// Ayarlar
+window.openSettings = () => document.getElementById('settingsModal').style.display='flex';
+window.closeSettings = () => document.getElementById('settingsModal').style.display='none';
+window.saveSettings = () => {
+    const nick = document.getElementById('newNick').value;
+    if(nick) {
+        currentUser = nick;
+        localStorage.setItem('chatNick', nick);
+        document.getElementById('myNickDisplay').innerText = nick;
+        closeSettings();
+    }
+};
+
+// İlk yükleme
+switchChannel('genel');
