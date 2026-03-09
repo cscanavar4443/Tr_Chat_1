@@ -3,277 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tr_Chat | Premium V3</title>
+    <title>Tr_Chat | Engine V5 (Admin Edition)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f1113; }
-        
-        /* Özel Scrollbar */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 20px; }
-
-        /* Animasyonlar */
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(10px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .message-bubble { animation: msgIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-
-        /* Glassmorphism */
-        .glass { background: rgba(32, 34, 37, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
-        .premium-border { border-left: 3px solid #6366f1; }
-        
-        /* Resim Yükleme Efekti */
-        .img-loading { filter: blur(5px); pointer-events: none; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0d0e12; color: #e2e8f0; }
+        .glass-card { background: rgba(22, 24, 29, 0.7); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .message-bubble:hover .admin-tools { opacity: 1; }
+        .channel-active { background: rgba(79, 70, 229, 0.15); color: #818cf8; border-radius: 4px; }
+        .ban-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
     </style>
 </head>
-<body class="h-screen flex text-gray-200 overflow-hidden">
+<body class="h-screen flex overflow-hidden">
 
-    <nav class="w-20 bg-[#0a0b0d] flex flex-col items-center py-6 gap-6 border-r border-white/5 flex-shrink-0">
-        <div class="w-14 h-14 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center font-bold text-white shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:scale-105 transition-transform cursor-pointer">TR</div>
-        <div class="w-10 h-[1px] bg-white/10"></div>
+    <div id="ban-screen" class="ban-screen">
+        <h1 class="text-6xl mb-4">🚫</h1>
+        <h2 class="text-2xl font-bold text-red-500">ERİŞİM ENGELLENDİ</h2>
+        <p class="text-gray-400 mt-2">Bu sunucudan süresiz olarak yasaklandınız.</p>
+    </div>
+
+    <nav class="w-16 md:w-20 bg-[#050505] flex flex-col items-center py-4 gap-4 border-r border-white/5 flex-shrink-0">
+        <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-indigo-600/20">V5</div>
+        <div class="w-8 h-[2px] bg-white/10"></div>
     </nav>
 
-    <aside class="w-72 bg-[#121417] flex flex-col hidden lg:flex flex-shrink-0 border-r border-white/5">
-        <div class="h-16 flex items-center px-6 border-b border-white/5">
-            <h1 class="font-bold text-lg tracking-tight text-white">Tr_Chat <span class="text-indigo-500 text-xs font-black ml-1 uppercase">Pro</span></h1>
+    <aside class="w-64 bg-[#121417] hidden md:flex flex-col border-r border-white/5">
+        <div class="h-14 flex items-center px-4 border-b border-white/5 justify-between">
+            <span class="font-bold text-sm">SUNUCU PANELİ</span>
+            <button onclick="createNewRoom()" id="admin-add-room" class="hidden text-gray-400 hover:text-white text-xl">+</button>
         </div>
         
-        <div class="p-4 flex-1">
-            <div class="bg-indigo-600/10 text-indigo-400 p-3 rounded-xl flex items-center font-semibold mb-6 border border-indigo-500/20">
-                <span class="mr-3 text-xl opacity-50">#</span> genel-sohbet
+        <div class="flex-1 overflow-y-auto py-4 px-2 space-y-1" id="room-list">
             </div>
 
-            <div class="px-2">
-                <div class="flex items-center justify-between text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-4">
-                    <span>Çevrimiçi</span>
-                    <span id="online-count" class="bg-[#1a1d21] px-2 py-0.5 rounded-full text-indigo-400">0</span>
-                </div>
-                <div id="online-users-list" class="flex flex-col gap-2">
-                    </div>
-            </div>
-        </div>
-
-        <div class="p-4 bg-[#0a0b0d]/50 border-t border-white/5 flex items-center gap-3">
-            <div class="relative">
-                <div id="me-av" class="w-10 h-10 bg-indigo-500 rounded-xl flex items-center justify-center font-bold text-white shadow-lg">?</div>
-                <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-4 border-[#121417] rounded-full"></div>
-            </div>
-            <div class="overflow-hidden">
-                <div id="me-name" class="text-sm font-bold text-white truncate">Yükleniyor...</div>
-                <div class="text-[10px] text-gray-500 font-semibold uppercase italic">Premium Üye</div>
+        <div class="p-4 bg-[#0a0b0d] border-t border-white/5 flex items-center gap-3">
+            <img id="me-av-img" class="w-8 h-8 rounded-full border border-white/10">
+            <div class="flex-1 min-w-0">
+                <div id="me-name" class="text-xs font-bold truncate">...</div>
+                <div id="me-role" class="text-[9px] text-gray-500 uppercase font-black tracking-tighter">Üye</div>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col bg-[#16191d] relative">
-        <header class="h-16 flex items-center px-8 border-b border-white/5 justify-between glass z-10">
-            <div class="flex items-center gap-3">
-                <span class="text-gray-500 text-2xl font-light">#</span>
-                <span class="font-bold text-white">genel-sohbet</span>
+    <main class="flex-1 flex flex-col bg-[#1e1f22]">
+        <header class="h-14 flex items-center px-6 glass-card z-20 justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-gray-400 text-xl">#</span>
+                <span id="current-room-name" class="font-bold">genel</span>
             </div>
-            <div id="typing-box" class="text-xs font-semibold text-indigo-400 italic bg-indigo-500/5 px-3 py-1 rounded-full border border-indigo-500/10"></div>
+            <div id="typing-status" class="text-xs text-indigo-400"></div>
         </header>
 
-        <div id="chat-box" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-            </div>
+        <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
 
-        <div class="p-6">
-            <div class="max-w-5xl mx-auto bg-[#1e2227] rounded-2xl flex items-center p-2 shadow-2xl border border-white/5 focus-within:border-indigo-500/50 transition-all">
-                
-                <button onclick="document.getElementById('file-inp').click()" class="w-12 h-12 flex items-center justify-center hover:bg-white/5 text-gray-400 hover:text-white rounded-xl transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                </button>
+        <div class="px-4 pb-6">
+            <div class="max-w-7xl mx-auto bg-[#2b2d31] rounded-xl flex items-center p-2">
+                <button onclick="document.getElementById('file-inp').click()" class="p-2 text-gray-400 hover:text-white">+</button>
                 <input type="file" id="file-inp" class="hidden" accept="image/*" onchange="uploadImage(event)">
-
-                <input type="text" id="msg-inp" placeholder="Buraya harika bir şeyler yaz..." class="bg-transparent flex-1 outline-none px-4 text-gray-200 placeholder-gray-600 text-sm font-medium">
-
-                <button onclick="send()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all active:scale-95 flex items-center gap-2">
-                    Gönder
-                </button>
+                <input type="text" id="msg-inp" placeholder="Mesaj gönder..." class="bg-transparent flex-1 outline-none px-4 text-sm">
+                <button onclick="send()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded font-bold text-sm">GÖNDER</button>
             </div>
         </div>
     </main>
 
     <script>
-        // --- FIREBASE AYARLARI ---
-        const firebaseConfig = {
+        const config = {
             apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
             authDomain: "trchat-7bc26.firebaseapp.com",
             databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com", 
             projectId: "trchat-7bc26"
         };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
         const db = firebase.database();
 
-        // Kullanıcı Kimliği (ID sabit kalmalı)
-        const myUID = localStorage.getItem('chat_uid') || Math.random().toString(36).substring(7);
-        localStorage.setItem('chat_uid', myUID);
+        // KULLANICI AYARLARI
+        const myUID = localStorage.getItem('chat_uid_v5') || Math.random().toString(36).substring(7);
+        localStorage.setItem('chat_uid_v5', myUID);
         
-        let myName = localStorage.getItem('chat_name');
+        let myName = localStorage.getItem('chat_name_v5');
         if(!myName) {
-            myName = prompt("Premium Dünyaya Hoş Geldin! Adın ne olsun?") || "Üye_" + Math.floor(Math.random()*99);
-            localStorage.setItem('chat_name', myName);
+            myName = prompt("Adın nedir?") || "Üye";
+            localStorage.setItem('chat_name_v5', myName);
         }
-        
+
+        const isAdmin = (myName.toLowerCase() === "ALPER");
+        let activeRoom = "genel";
+
+        // UI UPDATE
         document.getElementById("me-name").innerText = myName;
-        document.getElementById("me-av").innerText = myName.charAt(0).toUpperCase();
+        document.getElementById("me-av-img").src = `https://api.dicebear.com/7.x/bottts/svg?seed=${myName}`;
+        if(isAdmin) {
+            document.getElementById("me-role").innerText = "KURUCU";
+            document.getElementById("me-role").className = "text-[9px] text-red-500 uppercase font-black";
+            document.getElementById("admin-add-room").classList.remove("hidden");
+        }
 
-        // --- GELİŞMİŞ ONLINE SİSTEMİ (GERÇEK ZAMANLI) ---
-        const onlineRef = db.ref('onlineKullanicilar/' + myUID);
-        const connectedRef = db.ref('.info/connected');
-
-        connectedRef.on('value', snap => {
-            if (snap.val()) {
-                // Bağlantı kopunca SİL
-                onlineRef.onDisconnect().remove();
-                db.ref('yaziyor/' + myUID).onDisconnect().remove();
-                // Kayıt at
-                onlineRef.set({ name: myName, ts: Date.now() });
-            }
+        // BAN KONTROLÜ
+        db.ref(`banned/${myUID}`).on('value', snap => {
+            if(snap.val()) document.getElementById('ban-screen').style.display = 'flex';
         });
 
-        // Sayfa kapanma olayını yakala (Anında silme zorlaması)
-        window.onbeforeunload = () => {
-            onlineRef.remove();
-            db.ref('yaziyor/' + myUID).remove();
-        };
+        // ODA SİSTEMİ
+        function createNewRoom() {
+            const rName = prompt("Oda adı:");
+            if(rName) db.ref('rooms').child(rName).set({ createdBy: myName });
+        }
 
-        db.ref('onlineKullanicilar').on('value', snap => {
-            const list = document.getElementById('online-users-list');
-            const count = document.getElementById('online-count');
-            list.innerHTML = '';
-            let total = 0;
-            snap.forEach(child => {
-                total++;
-                const u = child.val();
+        function deleteRoom(rName) {
+            if(confirm(`${rName} odasını silmek istediğine emin misin?`)) {
+                db.ref('rooms').child(rName).remove();
+                db.ref('messages').child(rName).remove();
+                switchRoom('genel');
+            }
+        }
+
+        db.ref('rooms').on('value', snap => {
+            const list = document.getElementById('room-list');
+            list.innerHTML = `<div onclick="switchRoom('genel')" class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 rounded ${activeRoom === 'genel' ? 'channel-active' : ''}"><span># genel</span></div>`;
+            snap.forEach(room => {
+                const name = room.key;
                 list.innerHTML += `
-                    <div class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-white/5 transition-all group">
-                        <div class="w-8 h-8 bg-[#1a1d21] rounded-lg flex items-center justify-center font-bold text-indigo-400 border border-white/5 group-hover:border-indigo-500/50 transition-all">${u.name.charAt(0).toUpperCase()}</div>
-                        <span class="text-sm font-medium text-gray-400 group-hover:text-white transition-colors">${u.name}</span>
+                    <div onclick="switchRoom('${name}')" class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 rounded ${activeRoom === name ? 'channel-active' : ''}">
+                        <span># ${name}</span>
+                        ${isAdmin ? `<button onclick="deleteRoom('${name}')" class="text-xs text-gray-600 hover:text-red-500">Sil</button>` : ''}
                     </div>`;
             });
-            count.innerText = total;
         });
 
-        // --- YAZIYOR... GÖSTERGESİ ---
-        const msgInp = document.getElementById("msg-inp");
-        let tTimer;
-        msgInp.addEventListener('input', () => {
-            if(msgInp.value.trim() !== "") {
-                db.ref('yaziyor/' + myUID).set(myName);
-                clearTimeout(tTimer);
-                tTimer = setTimeout(() => db.ref('yaziyor/' + myUID).remove(), 2500);
-            } else {
-                db.ref('yaziyor/' + myUID).remove();
-            }
-        });
-
-        db.ref('yaziyor').on('value', snap => {
-            const box = document.getElementById('typing-box');
-            let typers = [];
-            snap.forEach(c => { if(c.key !== myUID) typers.push(c.val()); });
-            if(typers.length > 0) {
-                box.style.opacity = "1";
-                box.innerText = typers.join(', ') + " yazıyor...";
-            } else {
-                box.style.opacity = "0";
-            }
-        });
-
-        // --- RESİM YÜKLEME (ASENKRON & GÜVENLİ) ---
-        async function uploadImage(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-
-            // UI Kilitle
-            msgInp.disabled = true;
-            msgInp.placeholder = "Görüntü işleniyor ve yükleniyor...";
-
-            const formData = new FormData();
-            formData.append("image", file);
-
-            try {
-                const res = await fetch("https://api.imgbb.com/1/upload?key=de4827bd8b03b0a3bab867e72b366172", {
-                    method: "POST",
-                    body: formData
-                });
-                const data = await res.json();
-                if(data.success) {
-                    db.ref("mesajlar").push({
-                        isim: myName,
-                        mesaj: "",
-                        img: data.data.url,
-                        vakit: new Date().toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}),
-                        ts: Date.now()
-                    });
-                }
-            } catch (err) {
-                alert("Yükleme başarısız oldu.");
-            } finally {
-                msgInp.disabled = false;
-                msgInp.placeholder = "Buraya harika bir şeyler yaz...";
-                msgInp.focus();
-            }
+        function switchRoom(name) {
+            activeRoom = name;
+            document.getElementById('current-room-name').innerText = name;
+            loadMessages();
         }
 
-        // --- MESAJ GÖNDERME ---
+        // MESAJ SİSTEMİ
         function send() {
-            const txt = msgInp.value.trim();
-            if(!txt) return;
-
-            db.ref("mesajlar").push({
-                isim: myName,
-                mesaj: txt,
-                img: null,
-                vakit: new Date().toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'}),
-                ts: Date.now()
+            const inp = document.getElementById('msg-inp');
+            if(!inp.value.trim()) return;
+            db.ref('messages').child(activeRoom).push({
+                uid: myUID, name: myName, text: inp.value, time: Date.now()
             });
-            msgInp.value = "";
-            db.ref('yaziyor/' + myUID).remove();
+            inp.value = '';
         }
-        msgInp.addEventListener("keypress", e => { if(e.key === "Enter") send(); });
 
-        // --- MESAJLARI DİNLE VE RENDER ET ---
-        db.ref("mesajlar").limitToLast(40).on("child_added", snap => {
-            const d = snap.val();
-            const box = document.getElementById("chat-box");
-            
-            const div = document.createElement("div");
-            div.className = `flex flex-col gap-1 message-bubble p-2 rounded-xl transition-all hover:bg-white/[0.02] ${d.isim === myName ? 'premium-border' : ''}`;
-            
-            let html = `
-                <div class="flex items-center gap-2">
-                    <span class="font-bold text-indigo-400 text-sm tracking-wide">${d.isim}</span>
-                    <span class="text-[9px] text-gray-600 font-black uppercase tracking-widest">${d.vakit}</span>
-                </div>
-            `;
+        function deleteMessage(mid) {
+            if(isAdmin) db.ref('messages').child(activeRoom).child(mid).remove();
+        }
 
-            if(d.mesaj) {
-                html += `<p class="text-gray-300 text-sm leading-relaxed">${d.mesaj}</p>`;
+        function banUser(uid, name) {
+            if(isAdmin && confirm(`${name} kişisini banlamak istiyor musun?`)) {
+                db.ref('banned').child(uid).set(true);
             }
+        }
 
-            if(d.img) {
-                html += `<div class="mt-2 group relative inline-block">
-                    <img src="${d.img}" class="rounded-xl max-w-[320px] max-h-[400px] border border-white/10 shadow-2xl cursor-zoom-in group-hover:scale-[1.02] transition-transform duration-300" onclick="window.open(this.src)">
-                    <div class="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
-                </div>`;
-            }
+        function loadMessages() {
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML = '';
+            db.ref('messages').child(activeRoom).off();
+            db.ref('messages').child(activeRoom).on('child_added', snap => {
+                const m = snap.val();
+                const mid = snap.key;
+                const div = document.createElement('div');
+                div.className = "group flex gap-3 message-bubble relative";
+                div.innerHTML = `
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${m.name}" class="w-10 h-10 rounded-lg bg-gray-800">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm ${m.name.toLowerCase() === 'alper' ? 'text-red-400' : 'text-indigo-400'}">${m.name}</span>
+                            <span class="text-[10px] text-gray-600">${new Date(m.time).toLocaleTimeString()}</span>
+                        </div>
+                        <p class="text-gray-300 text-sm">${m.text}</p>
+                    </div>
+                    ${isAdmin ? `
+                    <div class="admin-tools opacity-0 absolute right-0 top-0 flex gap-2">
+                        <button onclick="deleteMessage('${mid}')" class="bg-gray-800 text-[10px] px-2 py-1 rounded hover:text-red-500">Sil</button>
+                        <button onclick="banUser('${m.uid}', '${m.name}')" class="bg-gray-800 text-[10px] px-2 py-1 rounded hover:text-red-500">Ban</button>
+                    </div>` : ''}
+                `;
+                chatBox.appendChild(div);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
 
-            div.innerHTML = html;
-            box.appendChild(div);
-            
-            // Premium Smooth Scroll
-            box.scrollTo({ top: box.scrollHeight, behavior: 'smooth' });
-        });
+            // Silinen mesajları anlık kaldır
+            db.ref('messages').child(activeRoom).on('child_removed', snap => {
+                loadMessages(); 
+            });
+        }
+
+        loadMessages();
+        document.getElementById('msg-inp').addEventListener('keypress', e => { if(e.key === 'Enter') send(); });
     </script>
 </body>
 </html>
