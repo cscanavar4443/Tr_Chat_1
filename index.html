@@ -3,200 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tr_Chat | Engine V5 (Admin Edition)</title>
+    <title>Tr_Chat | V6 Ultimate</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0d0e12; color: #e2e8f0; }
-        .glass-card { background: rgba(22, 24, 29, 0.7); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .message-bubble:hover .admin-tools { opacity: 1; }
-        .channel-active { background: rgba(79, 70, 229, 0.15); color: #818cf8; border-radius: 4px; }
-        .ban-screen { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f1113; color: #e2e8f0; }
+        .glass { background: rgba(30, 32, 38, 0.8); backdrop-filter: blur(10px); }
+        .msg-hover:hover .tools { opacity: 1; }
+        .ban-overlay { position: fixed; inset: 0; background: black; z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
 
-    <div id="ban-screen" class="ban-screen">
-        <h1 class="text-6xl mb-4">🚫</h1>
-        <h2 class="text-2xl font-bold text-red-500">ERİŞİM ENGELLENDİ</h2>
-        <p class="text-gray-400 mt-2">Bu sunucudan süresiz olarak yasaklandınız.</p>
+    <div id="ban-screen" class="ban-overlay">
+        <h1 class="text-9xl">🚫</h1>
+        <h2 class="text-4xl font-bold text-red-600 mt-5">BANLANDIN</h2>
+        <p class="text-gray-400 mt-2">Kurallara uymadığın için erişimin kesildi.</p>
     </div>
 
-    <nav class="w-16 md:w-20 bg-[#050505] flex flex-col items-center py-4 gap-4 border-r border-white/5 flex-shrink-0">
-        <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center font-black text-white shadow-lg shadow-indigo-600/20">V5</div>
-        <div class="w-8 h-[2px] bg-white/10"></div>
-    </nav>
-
-    <aside class="w-64 bg-[#121417] hidden md:flex flex-col border-r border-white/5">
-        <div class="h-14 flex items-center px-4 border-b border-white/5 justify-between">
-            <span class="font-bold text-sm">SUNUCU PANELİ</span>
-            <button onclick="createNewRoom()" id="admin-add-room" class="hidden text-gray-400 hover:text-white text-xl">+</button>
+    <aside class="w-64 bg-[#121417] flex flex-col border-r border-white/5">
+        <div class="p-4 border-b border-white/5 flex justify-between items-center bg-[#0a0b0d]">
+            <h1 class="font-bold text-indigo-500">TR_CHAT V6</h1>
+            <button onclick="addRoom()" class="bg-indigo-600 hover:bg-indigo-500 w-8 h-8 rounded-lg text-white font-bold transition-all">+</button>
         </div>
         
-        <div class="flex-1 overflow-y-auto py-4 px-2 space-y-1" id="room-list">
+        <div id="room-container" class="flex-1 overflow-y-auto p-2 space-y-1">
             </div>
 
         <div class="p-4 bg-[#0a0b0d] border-t border-white/5 flex items-center gap-3">
-            <img id="me-av-img" class="w-8 h-8 rounded-full border border-white/10">
-            <div class="flex-1 min-w-0">
-                <div id="me-name" class="text-xs font-bold truncate">...</div>
-                <div id="me-role" class="text-[9px] text-gray-500 uppercase font-black tracking-tighter">Üye</div>
+            <div id="my-avatar" class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white">?</div>
+            <div class="overflow-hidden">
+                <div id="display-name" class="text-sm font-bold truncate">Yükleniyor...</div>
+                <div id="display-role" class="text-[10px] text-gray-500 font-bold uppercase italic tracking-widest">Üye</div>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col bg-[#1e1f22]">
-        <header class="h-14 flex items-center px-6 glass-card z-20 justify-between">
+    <main class="flex-1 flex flex-col bg-[#16191d]">
+        <header class="h-14 flex items-center px-6 border-b border-white/5 glass justify-between">
             <div class="flex items-center gap-2">
-                <span class="text-gray-400 text-xl">#</span>
-                <span id="current-room-name" class="font-bold">genel</span>
+                <span class="text-indigo-500 font-bold text-xl">#</span>
+                <span id="active-room-title" class="font-bold">genel-sohbet</span>
             </div>
-            <div id="typing-status" class="text-xs text-indigo-400"></div>
+            <div id="typing-box" class="text-xs italic text-indigo-400"></div>
         </header>
 
         <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
 
-        <div class="px-4 pb-6">
-            <div class="max-w-7xl mx-auto bg-[#2b2d31] rounded-xl flex items-center p-2">
-                <button onclick="document.getElementById('file-inp').click()" class="p-2 text-gray-400 hover:text-white">+</button>
-                <input type="file" id="file-inp" class="hidden" accept="image/*" onchange="uploadImage(event)">
-                <input type="text" id="msg-inp" placeholder="Mesaj gönder..." class="bg-transparent flex-1 outline-none px-4 text-sm">
-                <button onclick="send()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded font-bold text-sm">GÖNDER</button>
+        <div class="p-4">
+            <div class="max-w-5xl mx-auto bg-[#1e2227] rounded-2xl flex items-center p-2 border border-white/5 focus-within:border-indigo-500/50">
+                <input type="text" id="msg-inp" placeholder="Mesajını buraya bırak..." class="bg-transparent flex-1 outline-none px-4 text-sm py-2">
+                <button onclick="sendMsg()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold transition-all active:scale-95">Gönder</button>
             </div>
         </div>
     </main>
 
     <script>
-        const config = {
+        const firebaseConfig = {
             apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
             authDomain: "trchat-7bc26.firebaseapp.com",
             databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com", 
             projectId: "trchat-7bc26"
         };
-        firebase.initializeApp(config);
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // KULLANICI AYARLARI
-        const myUID = localStorage.getItem('chat_uid_v5') || Math.random().toString(36).substring(7);
-        localStorage.setItem('chat_uid_v5', myUID);
+        // KULLANICI KİMLİĞİ
+        const myUID = localStorage.getItem('v6_uid') || Math.random().toString(36).substring(7);
+        localStorage.setItem('v6_uid', myUID);
         
-        let myName = localStorage.getItem('chat_name_v5');
+        let myName = localStorage.getItem('v6_name');
         if(!myName) {
-            myName = prompt("Adın nedir?") || "Üye";
-            localStorage.setItem('chat_name_v5', myName);
+            myName = prompt("Kullanıcı Adın Nedir?") || "Anonim";
+            localStorage.setItem('v6_name', myName);
         }
 
-        const isAdmin = (myName.toLowerCase() === "alper");
-        let activeRoom = "genel";
+        const isAdmin = myName.toLowerCase() === "alper";
+        let currentRoom = "genel";
 
-        // UI UPDATE
-        document.getElementById("me-name").innerText = myName;
-        document.getElementById("me-av-img").src = `https://api.dicebear.com/7.x/bottts/svg?seed=${myName}`;
+        // UI BAŞLAT
+        document.getElementById('display-name').innerText = myName;
+        document.getElementById('my-avatar').innerText = myName[0].toUpperCase();
         if(isAdmin) {
-            document.getElementById("me-role").innerText = "KURUCU";
-            document.getElementById("me-role").className = "text-[9px] text-red-500 uppercase font-black";
-            document.getElementById("admin-add-room").classList.remove("hidden");
+            document.getElementById('display-role').innerText = "KURUCU";
+            document.getElementById('display-role').classList.replace('text-gray-500', 'text-red-500');
         }
 
         // BAN KONTROLÜ
-        db.ref(`banned/${myUID}`).on('value', snap => {
+        db.ref(`bans/${myUID}`).on('value', snap => {
             if(snap.val()) document.getElementById('ban-screen').style.display = 'flex';
         });
 
-        // ODA SİSTEMİ
-        function createNewRoom() {
-            const rName = prompt("Oda adı:");
-            if(rName) db.ref('rooms').child(rName).set({ createdBy: myName });
-        }
-
-        function deleteRoom(rName) {
-            if(confirm(`${rName} odasını silmek istediğine emin misin?`)) {
-                db.ref('rooms').child(rName).remove();
-                db.ref('messages').child(rName).remove();
-                switchRoom('genel');
-            }
+        // ODA YÖNETİMİ
+        function addRoom() {
+            const rName = prompt("Yeni Oda Adı:");
+            if(rName) db.ref('rooms').child(rName).set({ owner: myName });
         }
 
         db.ref('rooms').on('value', snap => {
-            const list = document.getElementById('room-list');
-            list.innerHTML = `<div onclick="switchRoom('genel')" class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 rounded ${activeRoom === 'genel' ? 'channel-active' : ''}"><span># genel</span></div>`;
-            snap.forEach(room => {
-                const name = room.key;
-                list.innerHTML += `
-                    <div onclick="switchRoom('${name}')" class="flex items-center justify-between p-2 cursor-pointer hover:bg-white/5 rounded ${activeRoom === name ? 'channel-active' : ''}">
-                        <span># ${name}</span>
-                        ${isAdmin ? `<button onclick="deleteRoom('${name}')" class="text-xs text-gray-600 hover:text-red-500">Sil</button>` : ''}
+            const cont = document.getElementById('room-container');
+            cont.innerHTML = `<button onclick="switchRoom('genel')" class="w-full text-left p-2 rounded hover:bg-white/5 ${currentRoom==='genel'?'bg-indigo-600/20 text-indigo-400':''}"># genel</button>`;
+            snap.forEach(r => {
+                const name = r.key;
+                cont.innerHTML += `
+                    <div class="flex items-center justify-between group px-2 py-1 rounded hover:bg-white/5 ${currentRoom===name?'bg-indigo-600/20 text-indigo-400':''}">
+                        <button onclick="switchRoom('${name}')" class="flex-1 text-left"># ${name}</button>
+                        ${isAdmin || r.val().owner === myName ? `<button onclick="deleteRoom('${name}')" class="opacity-0 group-hover:opacity-100 text-xs text-red-500">Sil</button>` : ''}
                     </div>`;
             });
         });
 
-        function switchRoom(name) {
-            activeRoom = name;
-            document.getElementById('current-room-name').innerText = name;
+        function switchRoom(n) {
+            currentRoom = n;
+            document.getElementById('active-room-title').innerText = n;
             loadMessages();
         }
 
-        // MESAJ SİSTEMİ
-        function send() {
+        function deleteRoom(n) {
+            if(confirm("Odayı ve mesajları silmek istiyor musun?")) {
+                db.ref('rooms').child(n).remove();
+                db.ref('msgs').child(n).remove();
+                switchRoom('genel');
+            }
+        }
+
+        // MESAJLAŞMA
+        function sendMsg() {
             const inp = document.getElementById('msg-inp');
             if(!inp.value.trim()) return;
-            db.ref('messages').child(activeRoom).push({
-                uid: myUID, name: myName, text: inp.value, time: Date.now()
+            db.ref('msgs').child(currentRoom).push({
+                uid: myUID, name: myName, text: inp.value, ts: Date.now()
             });
             inp.value = '';
         }
 
-        function deleteMessage(mid) {
-            if(isAdmin) db.ref('messages').child(activeRoom).child(mid).remove();
+        function loadMessages() {
+            const box = document.getElementById('chat-box');
+            box.innerHTML = '';
+            db.ref('msgs').child(currentRoom).off();
+            db.ref('msgs').child(currentRoom).on('child_added', snap => {
+                const m = snap.val();
+                const mid = snap.key;
+                const isMe = m.uid === myUID;
+                
+                const div = document.createElement('div');
+                div.className = "flex gap-3 msg-hover relative group";
+                div.innerHTML = `
+                    <div class="w-10 h-10 rounded-lg bg-[#2b2d31] flex items-center justify-center font-bold text-indigo-400 border border-white/5">${m.name[0].toUpperCase()}</div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm ${m.name.toLowerCase()==='alper'?'text-red-500':'text-gray-200'}">${m.name}</span>
+                            <span class="text-[10px] text-gray-600">${new Date(m.ts).toLocaleTimeString()}</span>
+                        </div>
+                        <p id="t-${mid}" class="text-gray-300 text-sm">${m.text}</p>
+                    </div>
+                    <div class="tools opacity-0 transition-opacity flex gap-2">
+                        ${isMe ? `<button onclick="editMsg('${mid}')" class="text-[10px] text-indigo-400 hover:underline">Düzenle</button>` : ''}
+                        ${isAdmin ? `<button onclick="banUser('${m.uid}')" class="text-[10px] text-red-500 hover:underline">Ban</button>` : ''}
+                        ${isAdmin || isMe ? `<button onclick="deleteMsg('${mid}')" class="text-[10px] text-red-500 hover:underline">Sil</button>` : ''}
+                    </div>
+                `;
+                box.appendChild(div);
+                box.scrollTop = box.scrollHeight;
+            });
         }
 
-        function banUser(uid, name) {
-            if(isAdmin && confirm(`${name} kişisini banlamak istiyor musun?`)) {
-                db.ref('banned').child(uid).set(true);
+        function deleteMsg(mid) {
+            db.ref('msgs').child(currentRoom).child(mid).remove();
+            loadMessages();
+        }
+
+        function editMsg(mid) {
+            const oldText = document.getElementById(`t-${mid}`).innerText;
+            const newText = prompt("Mesajı düzenle:", oldText);
+            if(newText) db.ref('msgs').child(currentRoom).child(mid).update({ text: newText });
+            loadMessages();
+        }
+
+        function banUser(uid) {
+            if(confirm("Bu kullanıcıyı kalıcı olarak banlamak istiyor musun?")) {
+                db.ref('bans').child(uid).set(true);
             }
         }
 
-        function loadMessages() {
-            const chatBox = document.getElementById('chat-box');
-            chatBox.innerHTML = '';
-            db.ref('messages').child(activeRoom).off();
-            db.ref('messages').child(activeRoom).on('child_added', snap => {
-                const m = snap.val();
-                const mid = snap.key;
-                const div = document.createElement('div');
-                div.className = "group flex gap-3 message-bubble relative";
-                div.innerHTML = `
-                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${m.name}" class="w-10 h-10 rounded-lg bg-gray-800">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-sm ${m.name.toLowerCase() === 'alper' ? 'text-red-400' : 'text-indigo-400'}">${m.name}</span>
-                            <span class="text-[10px] text-gray-600">${new Date(m.time).toLocaleTimeString()}</span>
-                        </div>
-                        <p class="text-gray-300 text-sm">${m.text}</p>
-                    </div>
-                    ${isAdmin ? `
-                    <div class="admin-tools opacity-0 absolute right-0 top-0 flex gap-2">
-                        <button onclick="deleteMessage('${mid}')" class="bg-gray-800 text-[10px] px-2 py-1 rounded hover:text-red-500">Sil</button>
-                        <button onclick="banUser('${m.uid}', '${m.name}')" class="bg-gray-800 text-[10px] px-2 py-1 rounded hover:text-red-500">Ban</button>
-                    </div>` : ''}
-                `;
-                chatBox.appendChild(div);
-                chatBox.scrollTop = chatBox.scrollHeight;
-            });
-
-            // Silinen mesajları anlık kaldır
-            db.ref('messages').child(activeRoom).on('child_removed', snap => {
-                loadMessages(); 
-            });
-        }
-
         loadMessages();
-        document.getElementById('msg-inp').addEventListener('keypress', e => { if(e.key === 'Enter') send(); });
+        document.getElementById('msg-inp').addEventListener('keypress', e => { if(e.key==='Enter') sendMsg(); });
     </script>
 </body>
 </html>
