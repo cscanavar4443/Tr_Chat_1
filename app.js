@@ -1,3 +1,29 @@
+// --- F12 VE İNCELEME ENGELLİ ---
+(function() {
+    // 1. Sağ tık menüsünü tamamen kapat (İncele yazısı çıkmasın)
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 2. Kritik tuş kombinasyonlarını durdur
+    document.addEventListener('keydown', e => {
+        if (
+            e.key === "F12" || // F12 tuşu
+            (e.ctrlKey && e.shiftKey && (e.key === "I" || e.key === "J" || e.key === "C")) || // Ctrl+Shift+I/J/C
+            (e.ctrlKey && e.key === "U") // Ctrl+U (Kaynak kodu)
+        ) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+    });
+
+    // 3. Ekstra Önlem: Ctrl+S (Kaydetme) engeli
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey && e.key === "s") {
+            e.preventDefault();
+        }
+    });
+})();
+
 // --- SECURE CONFIG ---
 const MASTER_KEY = "overlord_alper_9922"; 
 const cfg = { apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs", databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com", projectId: "trchat-7bc26" };
