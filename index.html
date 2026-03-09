@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tr_Chat | V6 Ultimate</title>
+    <title>TR_CHAT | V6 ULTIMATE ELITE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -11,60 +11,97 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0f1113; color: #e2e8f0; }
-        .glass { background: rgba(30, 32, 38, 0.8); backdrop-filter: blur(10px); }
-        .msg-hover:hover .tools { opacity: 1; }
-        .ban-overlay { position: fixed; inset: 0; background: black; z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        ::-webkit-scrollbar { width: 4px; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0b0d0f; color: #e2e8f0; }
+        .glass { background: rgba(22, 25, 30, 0.7); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .sidebar { background: #111418; }
+        .chat-area { background: #16191d; }
+        .msg-bubble { background: #1e2227; transition: all 0.2s; border: 1px solid transparent; }
+        .msg-bubble:hover { border-color: rgba(79, 70, 229, 0.4); background: #23282f; }
+        .ban-overlay { position: fixed; inset: 0; background: radial-gradient(circle, #200 0%, #000 100%); z-index: 10000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        
+        /* Animasyonlar */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-msg { animation: fadeIn 0.3s ease forwards; }
+        
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
+        .admin-glow { text-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
 
-    <div id="ban-screen" class="ban-overlay">
-        <h1 class="text-9xl">🚫</h1>
-        <h2 class="text-4xl font-bold text-red-600 mt-5">BANLANDIN</h2>
-        <p class="text-gray-400 mt-2">Kurallara uymadığın için erişimin kesildi.</p>
+    <div id="ban-screen" class="ban-overlay p-10">
+        <div class="text-9xl mb-5">💀</div>
+        <h1 class="text-6xl font-black text-red-600 tracking-tighter">ERİŞİM ENGELLENDİ</h1>
+        <p class="text-xl text-gray-400 mt-4 max-w-md">Topluluk kurallarını ihlal ettiğiniz için bu platformdan kalıcı olarak uzaklaştırıldınız.</p>
+        <div class="mt-8 px-6 py-2 bg-red-600/20 border border-red-600 text-red-500 rounded-full font-bold">KARAR NİHAİDİR</div>
     </div>
 
-    <aside class="w-64 bg-[#121417] flex flex-col border-r border-white/5">
-        <div class="p-4 border-b border-white/5 flex justify-between items-center bg-[#0a0b0d]">
-            <h1 class="font-bold text-indigo-500">TR_CHAT V6</h1>
-            <button onclick="addRoom()" class="bg-indigo-600 hover:bg-indigo-500 w-8 h-8 rounded-lg text-white font-bold transition-all">+</button>
+    <aside class="w-72 sidebar flex flex-col border-r border-white/5">
+        <div class="p-5 flex justify-between items-center bg-[#0a0b0d]">
+            <div>
+                <h1 class="font-black text-white tracking-tight text-xl italic">TR_CHAT<span class="text-indigo-500">V6</span></h1>
+                <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Ultimate Edition</p>
+            </div>
+            <button onclick="addRoom()" class="bg-indigo-600 hover:bg-indigo-500 w-10 h-10 rounded-xl text-white shadow-lg shadow-indigo-500/20 transition-all active:scale-90 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" /></svg>
+            </button>
         </div>
         
-        <div id="room-container" class="flex-1 overflow-y-auto p-2 space-y-1">
-            </div>
+        <div class="p-4">
+            <p class="text-[10px] font-bold text-gray-600 uppercase mb-3 px-2 tracking-widest">Kanallar</p>
+            <div id="room-container" class="space-y-1 overflow-y-auto max-h-[calc(100vh-250px)]">
+                </div>
+        </div>
 
-        <div class="p-4 bg-[#0a0b0d] border-t border-white/5 flex items-center gap-3">
-            <div id="my-avatar" class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white">?</div>
-            <div class="overflow-hidden">
-                <div id="display-name" class="text-sm font-bold truncate">Yükleniyor...</div>
-                <div id="display-role" class="text-[10px] text-gray-500 font-bold uppercase italic tracking-widest">Üye</div>
+        <div class="mt-auto p-4 bg-[#0a0b0d] border-t border-white/5">
+            <div class="flex items-center gap-3 p-2 rounded-2xl hover:bg-white/5 transition-all cursor-pointer group" onclick="changeMyName()">
+                <div id="my-avatar" class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 flex items-center justify-center font-bold text-white shadow-lg relative">
+                    ?
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-[#0a0b0d] rounded-full"></div>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <div id="display-name" class="text-sm font-bold text-white truncate group-hover:text-indigo-400">Yükleniyor...</div>
+                    <div id="display-role" class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Üye</div>
+                </div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
             </div>
         </div>
     </aside>
 
-    <main class="flex-1 flex flex-col bg-[#16191d]">
-        <header class="h-14 flex items-center px-6 border-b border-white/5 glass justify-between">
-            <div class="flex items-center gap-2">
-                <span class="text-indigo-500 font-bold text-xl">#</span>
-                <span id="active-room-title" class="font-bold">genel-sohbet</span>
+    <main class="flex-1 flex flex-col chat-area">
+        <header class="h-16 flex items-center px-8 glass justify-between z-10">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-500/10 p-2 rounded-lg">
+                    <span class="text-indigo-500 font-black text-xl">#</span>
+                </div>
+                <div>
+                    <span id="active-room-title" class="font-bold text-lg text-white">genel-sohbet</span>
+                    <p class="text-[10px] text-gray-500 font-medium">Hoş geldiniz, iyi sohbetler!</p>
+                </div>
             </div>
-            <div id="typing-box" class="text-xs italic text-indigo-400"></div>
+            <div id="typing-box" class="text-xs italic text-indigo-400 animate-pulse"></div>
         </header>
 
-        <div id="chat-box" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+        <div id="chat-box" class="flex-1 overflow-y-auto p-8 space-y-6">
+            </div>
 
-        <div class="p-4">
-            <div class="max-w-5xl mx-auto bg-[#1e2227] rounded-2xl flex items-center p-2 border border-white/5 focus-within:border-indigo-500/50">
-                <input type="text" id="msg-inp" placeholder="Mesajını buraya bırak..." class="bg-transparent flex-1 outline-none px-4 text-sm py-2">
-                <button onclick="sendMsg()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold transition-all active:scale-95">Gönder</button>
+        <div class="p-6">
+            <div class="max-w-6xl mx-auto bg-[#1e2227] rounded-2xl flex items-center p-2 border border-white/5 shadow-2xl focus-within:border-indigo-500/50 focus-within:ring-4 ring-indigo-500/10 transition-all">
+                <div class="p-2 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <input type="text" id="msg-inp" placeholder="Mesajını buraya yaz..." class="bg-transparent flex-1 outline-none px-4 text-sm py-3 text-white placeholder-gray-600">
+                <button onclick="sendMsg()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all active:scale-95 flex items-center gap-2">
+                    <span>GÖNDER</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                </button>
             </div>
         </div>
     </main>
 
     <script>
+        // FIREBASE KURULUMU
         const firebaseConfig = {
             apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
             authDomain: "trchat-7bc26.firebaseapp.com",
@@ -74,47 +111,90 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // KULLANICI KİMLİĞİ
-        const myUID = localStorage.getItem('v6_uid') || Math.random().toString(36).substring(7);
+        // KULLANICI AYARLARI
+        const myUID = localStorage.getItem('v6_uid') || 'U' + Math.random().toString(36).substring(2, 9);
         localStorage.setItem('v6_uid', myUID);
         
-        let myName = localStorage.getItem('v6_name');
-        if(!myName) {
-            myName = prompt("Kullanıcı Adın Nedir?") || "Anonim";
-            localStorage.setItem('v6_name', myName);
-        }
-
-        const isAdmin = myName.toLowerCase() === "alper";
+        let myName = localStorage.getItem('v6_name') || "Anonim_" + Math.floor(Math.random()*999);
         let currentRoom = "genel";
 
-        // UI BAŞLAT
-        document.getElementById('display-name').innerText = myName;
-        document.getElementById('my-avatar').innerText = myName[0].toUpperCase();
-        if(isAdmin) {
-            document.getElementById('display-role').innerText = "KURUCU";
-            document.getElementById('display-role').classList.replace('text-gray-500', 'text-red-500');
+        function updateProfileUI() {
+            const isAdmin = myName.toLowerCase() === "alper";
+            document.getElementById('display-name').innerText = myName;
+            document.getElementById('my-avatar').innerText = myName[0].toUpperCase();
+            
+            const roleEl = document.getElementById('display-role');
+            if(isAdmin) {
+                roleEl.innerText = "KURUCU";
+                roleEl.className = "text-[9px] text-red-500 font-black uppercase tracking-widest admin-glow";
+            } else {
+                roleEl.innerText = "Üye";
+                roleEl.className = "text-[9px] text-gray-500 font-black uppercase tracking-widest";
+            }
+            return isAdmin;
         }
 
-        // BAN KONTROLÜ
+        function changeMyName() {
+            const n = prompt("Yeni kullanıcı adını gir:", myName);
+            if(n && n.trim().length > 1) {
+                myName = n.trim();
+                localStorage.setItem('v6_name', myName);
+                updateProfileUI();
+                location.reload(); // Değişikliklerin yansıması için
+            }
+        }
+
+        // BAN SİSTEMİ
         db.ref(`bans/${myUID}`).on('value', snap => {
             if(snap.val()) document.getElementById('ban-screen').style.display = 'flex';
         });
 
         // ODA YÖNETİMİ
         function addRoom() {
-            const rName = prompt("Yeni Oda Adı:");
-            if(rName) db.ref('rooms').child(rName).set({ owner: myName });
+            const rName = prompt("Oda ismi (boşluk bırakmayın):");
+            if(rName) {
+                const cleanName = rName.replace(/\s+/g, '-').toLowerCase();
+                db.ref('rooms').child(cleanName).set({ 
+                    owner: myName,
+                    ownerUID: myUID,
+                    createdAt: Date.now()
+                });
+            }
+        }
+
+        function deleteRoom(n) {
+            if(confirm(`#${n} odasını ve tüm geçmişini silmek istediğine emin misin?`)) {
+                db.ref('rooms').child(n).remove();
+                db.ref('msgs').child(n).remove();
+                switchRoom('genel');
+            }
         }
 
         db.ref('rooms').on('value', snap => {
             const cont = document.getElementById('room-container');
-            cont.innerHTML = `<button onclick="switchRoom('genel')" class="w-full text-left p-2 rounded hover:bg-white/5 ${currentRoom==='genel'?'bg-indigo-600/20 text-indigo-400':''}"># genel</button>`;
+            cont.innerHTML = `
+                <button onclick="switchRoom('genel')" class="w-full flex items-center gap-2 px-4 py-3 rounded-xl transition-all group ${currentRoom==='genel'?'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20':'text-gray-400 hover:bg-white/5'}">
+                    <span class="font-bold opacity-50">#</span>
+                    <span class="font-semibold">genel-sohbet</span>
+                </button>`;
+            
             snap.forEach(r => {
                 const name = r.key;
+                const data = r.val();
+                const isAdmin = myName.toLowerCase() === "alper";
+                const isOwner = data.ownerUID === myUID;
+
                 cont.innerHTML += `
-                    <div class="flex items-center justify-between group px-2 py-1 rounded hover:bg-white/5 ${currentRoom===name?'bg-indigo-600/20 text-indigo-400':''}">
-                        <button onclick="switchRoom('${name}')" class="flex-1 text-left"># ${name}</button>
-                        ${isAdmin || r.val().owner === myName ? `<button onclick="deleteRoom('${name}')" class="opacity-0 group-hover:opacity-100 text-xs text-red-500">Sil</button>` : ''}
+                    <div class="flex items-center gap-1 group">
+                        <button onclick="switchRoom('${name}')" class="flex-1 flex items-center gap-2 px-4 py-3 rounded-xl transition-all ${currentRoom===name?'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20':'text-gray-400 hover:bg-white/5'}">
+                            <span class="font-bold opacity-50">#</span>
+                            <span class="font-semibold truncate">${name}</span>
+                        </button>
+                        ${isAdmin || isOwner ? `
+                            <button onclick="deleteRoom('${name}')" class="p-2 text-red-500 opacity-0 group-hover:opacity-100 hover:bg-red-500/10 rounded-lg transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        ` : ''}
                     </div>`;
             });
         });
@@ -125,20 +205,17 @@
             loadMessages();
         }
 
-        function deleteRoom(n) {
-            if(confirm("Odayı ve mesajları silmek istiyor musun?")) {
-                db.ref('rooms').child(n).remove();
-                db.ref('msgs').child(n).remove();
-                switchRoom('genel');
-            }
-        }
-
-        // MESAJLAŞMA
+        // MESAJLAŞMA VE ARAÇLAR
         function sendMsg() {
             const inp = document.getElementById('msg-inp');
             if(!inp.value.trim()) return;
+            
             db.ref('msgs').child(currentRoom).push({
-                uid: myUID, name: myName, text: inp.value, ts: Date.now()
+                uid: myUID, 
+                name: myName, 
+                text: inp.value, 
+                ts: Date.now(),
+                role: myName.toLowerCase() === 'alper' ? 'admin' : 'user'
             });
             inp.value = '';
         }
@@ -151,22 +228,41 @@
                 const m = snap.val();
                 const mid = snap.key;
                 const isMe = m.uid === myUID;
+                const isAdminMe = myName.toLowerCase() === 'alper';
                 
                 const div = document.createElement('div');
-                div.className = "flex gap-3 msg-hover relative group";
+                div.className = "flex gap-4 animate-msg group";
                 div.innerHTML = `
-                    <div class="w-10 h-10 rounded-lg bg-[#2b2d31] flex items-center justify-center font-bold text-indigo-400 border border-white/5">${m.name[0].toUpperCase()}</div>
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2">
-                            <span class="font-bold text-sm ${m.name.toLowerCase()==='alper'?'text-red-500':'text-gray-200'}">${m.name}</span>
-                            <span class="text-[10px] text-gray-600">${new Date(m.ts).toLocaleTimeString()}</span>
-                        </div>
-                        <p id="t-${mid}" class="text-gray-300 text-sm">${m.text}</p>
+                    <div class="w-12 h-12 rounded-2xl bg-[#2b2d31] flex-shrink-0 flex items-center justify-center font-bold text-indigo-400 border border-white/5 text-xl shadow-inner">
+                        ${m.name[0].toUpperCase()}
                     </div>
-                    <div class="tools opacity-0 transition-opacity flex gap-2">
-                        ${isMe ? `<button onclick="editMsg('${mid}')" class="text-[10px] text-indigo-400 hover:underline">Düzenle</button>` : ''}
-                        ${isAdmin ? `<button onclick="banUser('${m.uid}')" class="text-[10px] text-red-500 hover:underline">Ban</button>` : ''}
-                        ${isAdmin || isMe ? `<button onclick="deleteMsg('${mid}')" class="text-[10px] text-red-500 hover:underline">Sil</button>` : ''}
+                    <div class="flex-1 space-y-1">
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-sm ${m.role==='admin'?'text-red-500 admin-glow':'text-indigo-300'}">${m.name}</span>
+                            <span class="text-[10px] text-gray-600 font-medium">${new Date(m.ts).toLocaleTimeString()}</span>
+                            ${m.role === 'admin' ? '<span class="text-[8px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded border border-red-500/20 font-black">YÖNETİCİ</span>' : ''}
+                        </div>
+                        <div class="msg-bubble p-4 rounded-2xl rounded-tl-none relative shadow-sm">
+                            <p id="t-${mid}" class="text-gray-200 text-sm leading-relaxed break-words">${m.text}</p>
+                            
+                            <div class="absolute -top-3 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                ${isMe ? `
+                                    <button onclick="editMsg('${mid}')" class="p-1.5 bg-[#121417] text-indigo-400 hover:text-white rounded-lg border border-white/5 shadow-xl">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    </button>
+                                ` : ''}
+                                ${isAdminMe && m.uid !== myUID ? `
+                                    <button onclick="banUser('${m.uid}', '${m.name}')" title="Kullanıcıyı Yasakla" class="p-1.5 bg-[#121417] text-red-500 hover:bg-red-500 hover:text-white rounded-lg border border-white/5 shadow-xl">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                                    </button>
+                                ` : ''}
+                                ${isAdminMe || isMe ? `
+                                    <button onclick="deleteMsg('${mid}')" class="p-1.5 bg-[#121417] text-red-400 hover:text-white rounded-lg border border-white/5 shadow-xl">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
                     </div>
                 `;
                 box.appendChild(div);
@@ -181,17 +277,25 @@
 
         function editMsg(mid) {
             const oldText = document.getElementById(`t-${mid}`).innerText;
-            const newText = prompt("Mesajı düzenle:", oldText);
-            if(newText) db.ref('msgs').child(currentRoom).child(mid).update({ text: newText });
-            loadMessages();
-        }
-
-        function banUser(uid) {
-            if(confirm("Bu kullanıcıyı kalıcı olarak banlamak istiyor musun?")) {
-                db.ref('bans').child(uid).set(true);
+            const newText = prompt("Mesajını düzenle:", oldText);
+            if(newText && newText !== oldText) {
+                db.ref('msgs').child(currentRoom).child(mid).update({ text: newText + " (düzenlendi)" });
+                loadMessages();
             }
         }
 
+        function banUser(uid, name) {
+            if(confirm(`${name} isimli kullanıcıyı sunucudan sonsuza dek sürmek istiyor musun?`)) {
+                db.ref('bans').child(uid).set({
+                    bannedBy: myName,
+                    at: Date.now()
+                });
+                alert("Adalet yerini buldu.");
+            }
+        }
+
+        // BAŞLATMA
+        updateProfileUI();
         loadMessages();
         document.getElementById('msg-inp').addEventListener('keypress', e => { if(e.key==='Enter') sendMsg(); });
     </script>
