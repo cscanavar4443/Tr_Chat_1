@@ -1,440 +1,276 @@
-/* ===============================
-   CONFIG
-================================ */
+// --- 1. CONFIG ---
 
-const config = {
- apiKey:"API_KEY",
- databaseURL:"DB_URL",
- projectId:"PROJECT_ID"
+const MASTER_KEY = "overlord_alper_9922";
+
+const cfg = {
+ apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
+ databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com",
+ projectId: "trchat-7bc26"
+};
+
+firebase.initializeApp(cfg);
+
+const db = firebase.database();
+
+let MY_NAME = localStorage.getItem("u_name");
+let MY_UID = localStorage.getItem("u_id");
+
+let currentRoom = "genel";
+
+const isRoot = () =>
+ localStorage.getItem("admin_token") === MASTER_KEY;
+
+
+
+// --- 2. DEVTOOLS BLOCK ---
+
+(function () {
+
+ const detonator = () => {
+
+  document.body.innerHTML = `
+  <div style="
+   background:#000;
+   color:red;
+   height:100vh;
+   display:flex;
+   align-items:center;
+   justify-content:center;
+   font-size:40px;
+   font-family:monospace">
+   SİSTEM KİLİTLENDİ
+  </div>
+  `;
+
+  while (true) {
+   debugger;
+  }
+
+ };
+
+ window.addEventListener("keydown", (e) => {
+
+  if (
+   e.key === "F12" ||
+   (e.ctrlKey && e.shiftKey && ["I", "J"].includes(e.key)) ||
+   (e.ctrlKey && e.key === "u")
+  ) {
+   e.preventDefault();
+   detonator();
+  }
+
+ });
+
+ document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+})();
+
+
+
+// --- 3. AUTH ---
+
+window.handleAuth = function () {
+
+ const email = document.getElementById("auth-email").value.trim();
+ const user = document.getElementById("auth-user").value.trim();
+ const pass = document.getElementById("auth-pass").value.trim();
+
+ if (!email || !user || !pass) {
+  alert("Eksik bilgi!");
+  return;
+ }
+
+ const safeUID = btoa(email).replace(/[^a-zA-Z0-9]/g, "");
+
+ db.ref("users/" + safeUID).once("value", (snap) => {
+
+  if (snap.exists() && snap.val().pass !== pass) {
+   alert("Hatalı şifre!");
+   return;
+  }
+
+  const data = snap.exists()
+   ? snap.val()
+   : {
+      email,
+      user,
+      pass,
+      id: safeUID
+     };
+
+  if (!snap.exists()) {
+   db.ref("users/" + safeUID).set(data);
+  }
+
+  localStorage.setItem("u_id", data.id);
+  localStorage.setItem("u_name", data.user);
+
+  location.reload();
+
+ });
+
+};
+
+
+
+// --- 4. CLEAN HTML ---
+
+function clean(t) {
+
+ const d = document.createElement("div");
+ d.textContent = t;
+
+ return d.innerHTML;
+
 }
 
-firebase.initializeApp(config)
 
-const db = firebase.database()
 
-/* ===============================
-   GLOBALS
-================================ */
+// --- 5. SEND MESSAGE ---
 
-let UID = localStorage.getItem("uid")
-let NAME = localStorage.getItem("uname")
-let ROOM = "genel"
+window.uiSend = function () {
 
-let lastMsg = 0
-let lastTyping = 0
+ const inp = document.getElementById("msg-input");
 
-const MSG_LIMIT = 400
-const RATE = 1200
+ if (!inp || !inp.value.trim() || !MY_UID) return;
 
-/* ===============================
-   UTILS
-================================ */
+ const role = isRoot()
+  ? { n: "OVERLORD", g: "admin-glow", c: "text-red-500" }
+  : { n: "MEMBER", g: "user-glow", c: "text-gray-400" };
 
-function clean(txt){
- const div=document.createElement("div")
- div.textContent=txt
- return div.innerHTML
-}
+ db.ref("msgs/" + currentRoom).push({
 
-async function sha(text){
- const buf = await crypto.subtle.digest(
-  "SHA-256",
-  new TextEncoder().encode(text)
- )
+  uid: MY_UID,
+  un: MY_NAME,
+  t: inp.value,
+  r: role,
+  ts: Date.now(),
+  v: isRoot() ? btoa(MASTER_KEY) : "null"
 
- return [...new Uint8Array(buf)]
- .map(x=>x.toString(16).padStart(2,"0"))
- .join("")
-}
+ });
 
-/* ===============================
-   AUTH
-================================ */
+ inp.value = "";
 
-async function login(){
+};
 
- const email=document.getElementById("email").value.trim()
- const user=document.getElementById("user").value.trim()
- const pass=document.getElementById("pass").value.trim()
 
- if(!email||!user||!pass)
- return alert("eksik")
 
- const uid=btoa(email).replace(/[^a-z0-9]/gi,"")
+// --- 6. LOAD MESSAGES ---
 
- const ref=db.ref("users/"+uid)
+window.loadMsgs = function () {
 
- const snap=await ref.get()
+ db.ref("msgs/" + currentRoom).off();
 
- const ph=await sha(pass)
+ db.ref("msgs/" + currentRoom)
+  .limitToLast(50)
+  .on("value", (snap) => {
 
- if(snap.exists()){
+   const box = document.getElementById("messages");
 
-  if(snap.val().pass!==ph)
-  return alert("şifre yanlış")
+   if (!box) return;
 
- }else{
+   box.innerHTML = "";
 
-  await ref.set({
-   email,
-   user,
-   pass:ph,
-   role:"member",
-   created:Date.now(),
-   banned:false
-  })
+   snap.forEach((c) => {
+
+    const d = c.val();
+
+    if (d.r.n === "OVERLORD" && d.v !== btoa(MASTER_KEY)) return;
+
+    box.innerHTML += `
+     <div class="msg ${d.r.g}">
+      <div class="text-[10px] font-bold ${d.r.c} mb-1 uppercase tracking-tighter">
+       ${d.r.n} • ${clean(d.un)}
+      </div>
+      <div class="text-[14px] leading-snug">
+       ${clean(d.t)}
+      </div>
+     </div>
+    `;
+
+   });
+
+   box.scrollTop = box.scrollHeight;
+
+  });
+
+};
+
+
+
+// --- 7. ROOMS ---
+
+db.ref("rooms").on("value", (snap) => {
+
+ const list = document.getElementById("room-list");
+
+ if (!list) return;
+
+ list.innerHTML =
+  `<div onclick="switchRoom('genel')" class="room-item active"># genel</div>`;
+
+ snap.forEach((c) => {
+
+  list.innerHTML += `
+   <div onclick="switchRoom('${c.key}')" class="room-item">
+    # ${c.key}
+   </div>
+  `;
+
+ });
+
+});
+
+
+
+// --- 8. SWITCH ROOM ---
+
+window.switchRoom = function (id) {
+
+ currentRoom = id;
+
+ document.getElementById("active-room-name").innerText = "# " + id;
+
+ loadMsgs();
+
+};
+
+
+
+// --- 9. INIT ---
+
+document.addEventListener("DOMContentLoaded", () => {
+
+ if (window.location.hash === "#root") {
+
+  localStorage.setItem("admin_token", MASTER_KEY);
+
+  location.hash = "";
+
+  location.reload();
 
  }
 
- localStorage.setItem("uid",uid)
- localStorage.setItem("uname",user)
+ if (MY_UID) {
 
- location.reload()
+  const auth = document.getElementById("auth-screen");
 
-}
+  if (auth) auth.style.display = "none";
 
-/* ===============================
-   ONLINE USERS
-================================ */
-
-function setOnline(){
-
- if(!UID)return
-
- const ref=db.ref("online/"+UID)
-
- ref.set({
-  user:NAME,
-  ts:Date.now()
- })
-
- ref.onDisconnect().remove()
-
-}
-
-/* ===============================
-   LOAD ONLINE
-================================ */
-
-function loadOnline(){
-
- db.ref("online").on("value",snap=>{
-
-  const box=document.getElementById("online")
-
-  box.innerHTML=""
-
-  snap.forEach(u=>{
-
-   const d=u.val()
-
-   box.innerHTML+=`
-   <div class="onlineUser">
-    🟢 ${clean(d.user)}
-   </div>
-   `
-
-  })
-
- })
-
-}
-
-/* ===============================
-   SEND MESSAGE
-================================ */
-
-async function sendMsg(){
-
- if(!UID)return
-
- const now=Date.now()
-
- if(now-lastMsg<RATE)
- return
-
- const input=document.getElementById("msg")
-
- let text=input.value.trim()
-
- if(!text)return
-
- if(text.length>MSG_LIMIT)
- return alert("mesaj çok uzun")
-
- lastMsg=now
-
- await db.ref("msgs/"+ROOM).push({
-
-  uid:UID,
-  user:NAME,
-  text,
-  ts:now
-
- })
-
- input.value=""
-
-}
-
-/* ===============================
-   DELETE MESSAGE
-================================ */
-
-async function delMsg(id){
-
- const ref=db.ref("msgs/"+ROOM+"/"+id)
-
- const snap=await ref.get()
-
- if(!snap.exists())return
-
- if(snap.val().uid!==UID)
- return
-
- ref.remove()
-
-}
-
-/* ===============================
-   LOAD MESSAGES
-================================ */
-
-function loadMsgs(){
-
- db.ref("msgs/"+ROOM)
- .limitToLast(80)
- .on("value",snap=>{
-
-  const box=document.getElementById("messages")
-
-  box.innerHTML=""
-
-  snap.forEach(m=>{
-
-   const d=m.val()
-
-   box.innerHTML+=`
-   <div class="msg">
-
-    <div class="msgHead">
-     <b>${clean(d.user)}</b>
-     <span>${new Date(d.ts).toLocaleTimeString()}</span>
-    </div>
-
-    <div class="msgText">
-     ${clean(d.text)}
-    </div>
-
-    ${d.uid===UID?`
-    <button onclick="delMsg('${m.key}')">
-     sil
-    </button>`:""}
-
-   </div>
-   `
-
-  })
-
-  box.scrollTop=box.scrollHeight
-
- })
-
-}
-
-/* ===============================
-   TYPING
-================================ */
-
-function typing(){
-
- const now=Date.now()
-
- if(now-lastTyping<1000)return
-
- lastTyping=now
-
- db.ref("typing/"+ROOM+"/"+UID).set({
-
-  user:NAME,
-  ts:now
-
- })
-
- setTimeout(()=>{
-  db.ref("typing/"+ROOM+"/"+UID).remove()
- },2000)
-
-}
-
-function loadTyping(){
-
- db.ref("typing/"+ROOM).on("value",snap=>{
-
-  const box=document.getElementById("typing")
-
-  box.innerHTML=""
-
-  snap.forEach(t=>{
-
-   const d=t.val()
-
-   if(t.key===UID)return
-
-   box.innerHTML+=`
-   ${clean(d.user)} yazıyor...
-   `
-
-  })
-
- })
-
-}
-
-/* ===============================
-   ROOMS
-================================ */
-
-async function createRoom(){
-
- const name=prompt("room adı")
-
- if(!name)return
-
- const safe=name
- .toLowerCase()
- .replace(/[^a-z0-9]/g,"")
-
- await db.ref("rooms/"+safe).set({
-
-  owner:UID,
-  created:Date.now()
-
- })
-
-}
-
-function loadRooms(){
-
- db.ref("rooms").on("value",snap=>{
-
-  const box=document.getElementById("rooms")
-
-  box.innerHTML=""
-
-  snap.forEach(r=>{
-
-   box.innerHTML+=`
-   <div onclick="switchRoom('${r.key}')">
-    # ${r.key}
-   </div>
-   `
-
-  })
-
- })
-
-}
-
-function switchRoom(r){
-
- ROOM=r
-
- loadMsgs()
- loadTyping()
-
-}
-
-/* ===============================
-   BAN SYSTEM
-================================ */
-
-async function ban(uid){
-
- const me=await db.ref("users/"+UID).get()
-
- if(me.val().role!=="admin")
- return
-
- await db.ref("users/"+uid+"/banned")
- .set(true)
-
-}
-
-async function checkBan(){
-
- if(!UID)return
-
- const snap=await db.ref("users/"+UID).get()
-
- if(snap.val().banned){
-
-  alert("banlandın")
-  localStorage.clear()
-  location.reload()
+  loadMsgs();
 
  }
 
-}
+ const input = document.getElementById("msg-input");
 
-/* ===============================
-   EMOJI PARSER
-================================ */
+ if (input) {
 
-function parseEmoji(text){
+  input.addEventListener("keypress", (e) => {
 
- return text
- .replace(":)","😊")
- .replace(":(","😢")
- .replace(":D","😄")
- .replace("<3","❤️")
+   if (e.key === "Enter") uiSend();
 
-}
+  });
 
-/* ===============================
-   INIT
-================================ */
-
-function init(){
-
- if(!UID){
-  document.getElementById("login").style.display="block"
-  return
  }
 
- document.getElementById("chat").style.display="block"
-
- setOnline()
-
- loadOnline()
-
- loadRooms()
-
- loadMsgs()
-
- loadTyping()
-
- checkBan()
-
-}
-
-/* ===============================
-   EVENTS
-================================ */
-
-document
-.getElementById("msg")
-.addEventListener("keypress",e=>{
-
- if(e.key==="Enter")
- sendMsg()
-
- typing()
-
-})
-
-/* ===============================
-   START
-================================ */
-
-init()
+});
