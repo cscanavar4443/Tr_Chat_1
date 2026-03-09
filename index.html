@@ -2,31 +2,71 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>IMMORTAL V12 | GITHUB EDITION</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER-CORE V15 | OMNIPOTENCE</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
-<body>
-    <div id="BAN-SCREEN"><h1>ERİŞİM REDDEDİLDİ</h1></div>
-    
-    <div class="main-container">
-        <aside id="sidebar">
-            <h2>V12 OVERLORD</h2>
-            <div id="user-box"></div>
+<body oncontextmenu="return false;">
+
+    <div id="BAN-SCREEN" class="ban-screen">
+        <h1 class="text-9xl mb-4">☣️</h1>
+        <h2 class="text-4xl font-black text-red-600">SİSTEMDEN MEN EDİLDİN</h2>
+        <p class="text-gray-500 mt-4 font-mono" id="ban-reason">Güvenlik İhlali Saptandı.</p>
+    </div>
+
+    <div class="flex h-full w-full">
+        <aside class="sidebar">
+            <div class="p-6">
+                <h1 class="logo">V15 <span class="text-indigo-500">OMNI</span></h1>
+                <div id="voice-status" class="voice-status">⚪ SESLİ: BAĞLI DEĞİL</div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-4 space-y-6">
+                <div>
+                    <p class="label">Kanallar</p>
+                    <div id="room-list" class="space-y-1"></div>
+                    <button onclick="createRoom()" class="btn-create">+ Oda Oluştur</button>
+                </div>
+                <div>
+                    <p class="label">Aktif Kişiler</p>
+                    <div id="user-list" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+
+            <div class="p-4 bg-black/50 border-t border-white/5">
+                <div class="flex items-center gap-3">
+                    <div id="my-avatar" class="avatar">?</div>
+                    <div class="truncate">
+                        <p id="my-name-display" class="text-sm font-bold truncate">...</p>
+                        <p id="my-role-display" class="role-text">Doğrulanıyor</p>
+                    </div>
+                </div>
+            </div>
         </aside>
-        
-        <main id="chat-area">
-            <div id="messages"></div>
-            <div class="input-group">
-                <input id="msg-input" type="text" placeholder="Sisteme veri gönder...">
-                <button onclick="uiSend()">GÖNDER</button>
+
+        <main class="flex-1 flex flex-col">
+            <header class="chat-header">
+                <h3 id="active-room-name" class="font-bold text-gray-300"># genel</h3>
+                <div class="flex gap-4">
+                    <button onclick="joinVoice()" class="voice-btn">🔊 Sese Katıl</button>
+                    <div id="root-tag" class="hidden root-badge">OVERLORD MODE</div>
+                </div>
+            </header>
+
+            <div id="messages" class="flex-1 overflow-y-auto p-6 space-y-1"></div>
+
+            <div class="p-6">
+                <div class="max-w-4xl mx-auto relative">
+                    <input id="msg-input" type="text" placeholder="Mesaj gönder... (**kalın**, *italik*, `kod`)" class="chat-input">
+                    <button onclick="uiSend()" class="send-btn">GÖNDER</button>
+                </div>
             </div>
         </main>
     </div>
 
-    <script src="security.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
