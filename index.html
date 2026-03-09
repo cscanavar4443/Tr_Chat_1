@@ -3,103 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBER FORTRESS V7 | ELITE AUTHORITY</title>
+    <title>CYBER FORTRESS V8 | OVERLORD</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root {
-            --primary: #6366f1;
-            --accent: #f43f5e;
-            --bg-dark: #09090b;
-        }
-
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background: var(--bg-dark); 
-            color: #fafafa; 
-            overflow: hidden;
-            height: 100vh;
-        }
-
-        /* Arka Plan Animasyonu */
-        .mesh-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-                        radial-gradient(circle at 0% 0%, rgba(244, 63, 94, 0.05) 0%, transparent 30%);
-            animation: pulse 10s infinite alternate;
-        }
-
-        @keyframes pulse { 0% { opacity: 0.5; } 100% { opacity: 1; } }
-
+        :root { --primary: #6366f1; --accent: #f43f5e; --bg-dark: #09090b; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: #fafafa; overflow: hidden; height: 100vh; }
         .glass { background: rgba(15, 15, 20, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
         
-        /* Ban Overlay - Premium Look */
-        #HARD-BAN {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 999999;
-            display: none; align-items: center; justify-content: center; backdrop-filter: blur(40px);
-        }
+        /* Ban & Kick Overlays */
+        .system-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(50px); }
+        
+        /* Authority Menu Animation */
+        .auth-tools { opacity: 0; transform: translateX(-10px); transition: 0.3s; pointer-events: none; }
+        .msg-card:hover .auth-tools { opacity: 1; transform: translateX(0); pointer-events: auto; }
 
-        .msg-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            animation: slideIn 0.4s ease-out;
-        }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-tool { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; transition: 0.2s; cursor: pointer; }
+        .btn-kick { background: #f59e0b; color: #000; }
+        .btn-wipe { background: #6366f1; color: #fff; }
+        .btn-ban { background: #ef4444; color: #fff; }
 
-        /* Ban Butonu Stil */
-        .ban-action {
-            position: absolute; left: -10px; top: -5px; width: 20px; height: 20px;
-            background: var(--accent); color: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; cursor: pointer; opacity: 0; transition: 0.2s;
-            box-shadow: 0 0 15px rgba(244, 63, 94, 0.4); z-index: 10;
-        }
-        .msg-card:hover .ban-action { opacity: 1; }
-
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .online { background: #10b981; box-shadow: 0 0 8px #10b981; }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .banned-glow { animation: pulse-red 2s infinite; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div class="mesh-bg"></div>
+    <div id="HARD-BAN" class="system-overlay">
+        <div class="text-center p-12 glass rounded-3xl border-red-500/20 banned-glow">
+            <h1 class="text-6xl mb-6">🚫</h1>
+            <h2 class="text-3xl font-black text-red-500 mb-2 uppercase tracking-tighter">Cihaz İmha Edildi</h2>
+            <p class="text-gray-500 font-mono text-xs uppercase tracking-widest">Access Denied: Permanent Blacklist.</p>
+        </div>
+    </div>
 
-    <div id="HARD-BAN">
-        <div class="text-center p-12 glass rounded-3xl border-red-500/20 max-w-lg">
-            <div class="text-6xl mb-6">🔒</div>
-            <h1 class="text-4xl font-bold tracking-tight mb-4">ERİŞİM KISITLANDI</h1>
-            <p class="text-gray-400 font-mono text-sm leading-relaxed">
-                Güvenlik protokolü gereği bu cihaz karalisteye alınmıştır. <br>
-                <span class="text-red-400 mt-2 block">[ID: SYSTEM_DEACTIVATED]</span>
-            </p>
+    <div id="KICK-SCREEN" class="system-overlay">
+        <div class="text-center p-12 glass rounded-3xl border-amber-500/20">
+            <h1 class="text-6xl mb-6">👢</h1>
+            <h2 class="text-3xl font-black text-amber-500 mb-2 uppercase tracking-tighter">Odadan Atıldın</h2>
+            <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-amber-500 text-black font-bold rounded-lg text-xs">YENİDEN BAĞLAN</button>
         </div>
     </div>
 
     <div class="flex h-full w-full p-4 gap-4">
-        
         <aside class="w-80 flex flex-col gap-4">
             <div class="glass rounded-2xl p-6">
                 <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-bold italic shadow-lg shadow-indigo-500/20">CF</div>
+                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-bold italic shadow-lg shadow-indigo-500/20 text-white">V8</div>
                     <div>
-                        <h1 class="font-bold tracking-tight">FORTRESS <span class="text-indigo-500">V7</span></h1>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Elite Authority</p>
+                        <h1 class="font-bold tracking-tight">OVERLORD <span class="text-indigo-500">SESSION</span></h1>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Full Control Active</p>
                     </div>
                 </div>
-
-                <div class="space-y-4">
-                    <p class="text-[10px] text-gray-600 font-bold uppercase tracking-widest px-2">Kallar</p>
-                    <nav id="room-list" class="space-y-1">
-                        </nav>
-                </div>
+                <div id="room-list" class="space-y-1"></div>
             </div>
-
             <div class="glass rounded-2xl p-4 mt-auto">
                 <div class="flex items-center gap-4">
                     <div id="u-avatar" class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-xl">?</div>
@@ -112,56 +72,38 @@
         </aside>
 
         <main class="flex-1 flex flex-col glass rounded-2xl overflow-hidden relative">
-            
             <header class="h-20 px-8 flex items-center justify-between border-b border-white/5 bg-white/5">
-                <div class="flex items-center gap-4">
-                    <div class="status-dot online"></div>
-                    <div>
-                        <h2 id="room-title" class="font-bold text-lg">genel-sohbet</h2>
-                        <p class="text-[10px] text-gray-500 font-medium">Uçtan uca şifreli bağlantı aktif.</p>
-                    </div>
+                <div>
+                    <h2 id="room-title" class="font-bold text-lg"># genel-sohbet</h2>
+                    <p class="text-[10px] text-gray-500 font-medium">Yönetim Modu: Aktif</p>
                 </div>
-                
-                <div id="admin-badge" class="hidden px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold rounded-full tracking-widest">ROOT SESSION</div>
+                <div id="admin-badge" class="hidden px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold rounded-full tracking-widest uppercase">Overlord Access</div>
             </header>
 
-            <div id="chat-flow" class="flex-1 overflow-y-auto p-8 space-y-6 scroll-smooth">
-                </div>
+            <div id="chat-flow" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
 
             <div class="p-6 bg-white/5 border-t border-white/5">
                 <div class="max-w-4xl mx-auto flex items-center gap-4 glass rounded-2xl p-2 focus-within:ring-2 ring-indigo-500/20 transition-all">
-                    <input id="input" type="text" placeholder="Bir mesaj yazın..." class="flex-1 bg-transparent border-none outline-none px-4 text-sm py-3 text-gray-200">
-                    <button onclick="send()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95">Gönder</button>
+                    <input id="input" type="text" placeholder="Komut veya mesaj gönder..." class="flex-1 bg-transparent border-none outline-none px-4 text-sm py-3 text-gray-200">
+                    <button onclick="send()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95">GÖNDER</button>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-        // --- 1. PREMIUM FINGERPRINT ENGINE ---
         const getEliteID = () => {
-            const keys = [
-                navigator.userAgent,
-                navigator.language,
-                screen.width + "x" + screen.height,
-                new Date().getTimezoneOffset(),
-                navigator.hardwareConcurrency,
-                navigator.deviceMemory || "unk"
-            ];
+            const keys = [navigator.userAgent, navigator.language, screen.width + "x" + screen.height, navigator.platform, navigator.hardwareConcurrency];
             const str = keys.join('::');
             let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                hash |= 0;
-            }
-            return 'EID-' + Math.abs(hash).toString(16).toUpperCase();
+            for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
+            return 'OVR-' + Math.abs(hash).toString(16).toUpperCase();
         };
 
         const DEVICE_ID = getEliteID();
         let MY_NAME = localStorage.getItem('v6_name') || "User_" + DEVICE_ID.slice(-4);
         let CURRENT_ROOM = "genel";
 
-        // FIREBASE SETUP
         const firebaseConfig = {
             apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
             authDomain: "trchat-7bc26.firebaseapp.com",
@@ -173,98 +115,88 @@
 
         const isRoot = () => MY_NAME.toLowerCase() === "alper";
 
-        // BAN CHECK
-        db.ref(`hard_bans/${DEVICE_ID}`).on('value', snap => {
-            if(snap.val()) document.getElementById('HARD-BAN').style.display = 'flex';
+        // BAN & KICK CONTROLS
+        db.ref(`hard_bans/${DEVICE_ID}`).on('value', snap => { if(snap.val()) document.getElementById('HARD-BAN').style.display = 'flex'; });
+        db.ref(`kicks/${DEVICE_ID}`).on('value', snap => { 
+            if(snap.val()) {
+                document.getElementById('KICK-SCREEN').style.display = 'flex';
+                db.ref(`kicks/${DEVICE_ID}`).remove(); // Otomatik sıfırla ki tekrar girebilsin
+            }
         });
 
-        // SEND MESSAGE
         const send = () => {
             const inp = document.getElementById('input');
-            const txt = inp.value.trim();
-            if(!txt) return;
-
+            if(!inp.value.trim()) return;
             db.ref('msgs').child(CURRENT_ROOM).push({
                 fprint: DEVICE_ID,
                 name: MY_NAME,
-                text: txt,
+                text: inp.value.trim(),
                 ts: Date.now(),
                 role: isRoot() ? 'admin' : 'user'
             });
             inp.value = '';
         };
 
-        // LOAD MESSAGES
         const load = () => {
             const flow = document.getElementById('chat-flow');
-            db.ref('msgs').child(CURRENT_ROOM).off();
-            db.ref('msgs').child(CURRENT_ROOM).on('child_added', snap => {
-                const m = snap.val();
-                const isAdmin = m.role === 'admin';
-                const isMe = m.fprint === DEVICE_ID;
-                
-                const card = document.createElement('div');
-                card.className = `msg-card flex gap-4 ${isMe ? 'flex-row-reverse' : ''}`;
-                
-                // Ban Butonu (Root'san ve başkasıysa)
-                const banAction = (isRoot() && !isMe) 
-                    ? `<div onclick="banDevice('${m.fprint}')" class="ban-action" title="Hard Ban">✕</div>` : '';
+            db.ref('msgs').child(CURRENT_ROOM).on('value', snap => {
+                flow.innerHTML = '';
+                snap.forEach(child => {
+                    const m = child.val();
+                    const key = child.key;
+                    const isMe = m.fprint === DEVICE_ID;
+                    const card = document.createElement('div');
+                    card.className = `msg-card flex gap-4 ${isMe ? 'flex-row-reverse text-right' : ''}`;
+                    
+                    const tools = (isRoot() && !isMe) ? `
+                        <div class="auth-tools flex gap-1 mt-2">
+                            <div onclick="kickUser('${m.fprint}')" class="btn-tool btn-kick">Kick</div>
+                            <div onclick="wipeUser('${m.fprint}')" class="btn-tool btn-wipe">Wipe</div>
+                            <div onclick="banUser('${m.fprint}')" class="btn-tool btn-ban">Ban</div>
+                        </div>
+                    ` : '';
 
-                card.innerHTML = `
-                    <div class="relative shrink-0">
-                        ${banAction}
-                        <div class="w-10 h-10 rounded-xl ${isAdmin ? 'bg-red-500/20 text-red-500 border border-red-500/30' : 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'} flex items-center justify-center font-bold text-xs">
-                            ${m.name[0].toUpperCase()}
+                    card.innerHTML = `
+                        <div class="shrink-0">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-xs border border-white/10">${m.name[0]}</div>
                         </div>
-                    </div>
-                    <div class="max-w-[70%] space-y-1 ${isMe ? 'items-end' : ''}">
-                        <div class="flex items-center gap-2 ${isMe ? 'justify-end' : ''}">
-                            <span class="text-[11px] font-bold ${isAdmin ? 'text-red-400' : 'text-gray-400'}">${m.name}</span>
-                            <span class="text-[9px] text-gray-600 font-medium">${new Date(m.ts).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        <div class="max-w-[70%]">
+                            <span class="text-[10px] font-black uppercase tracking-widest ${m.role==='admin'?'text-red-500':'text-gray-500'}">${m.name}</span>
+                            <div class="px-4 py-2 bg-white/5 border border-white/5 rounded-2xl text-sm text-gray-200 mt-1">${m.text}</div>
+                            ${tools}
                         </div>
-                        <div class="px-4 py-2.5 rounded-2xl text-sm ${isMe ? 'bg-indigo-600 text-white rounded-tr-none' : 'glass text-gray-200 rounded-tl-none'}">
-                            ${m.text}
-                        </div>
-                    </div>
-                `;
-                flow.appendChild(card);
+                    `;
+                    flow.appendChild(card);
+                });
                 flow.scrollTop = flow.scrollHeight;
             });
         };
 
-        const banDevice = (id) => {
-            if(isRoot() && confirm("DİKKAT: Bu cihazın tüm erişimini kalıcı olarak kesmek üzeresiniz. Onaylıyor musunuz?")) {
-                db.ref('hard_bans').child(id).set({
-                    at: Date.now(),
-                    by: MY_NAME
+        // --- OVERLORD COMMANDS ---
+        window.kickUser = (id) => { if(confirm("Odadan atılsın mı?")) db.ref('kicks').child(id).set(true); };
+        
+        window.banUser = (id) => { if(confirm("BU CIHAZI EBEDIYEN YASAKLA?")) db.ref('hard_bans').child(id).set({at: Date.now()}); };
+        
+        window.wipeUser = (id) => {
+            if(confirm("BU KULLANICININ TÜM MESAJLARI SİLİNSİN Mİ?")) {
+                db.ref('msgs').child(CURRENT_ROOM).once('value', snap => {
+                    snap.forEach(child => {
+                        if(child.val().fprint === id) db.ref('msgs').child(CURRENT_ROOM).child(child.key).remove();
+                    });
                 });
             }
         };
 
-        // INITIALIZE
+        // SETUP
         document.getElementById('u-name').innerText = MY_NAME;
         document.getElementById('u-avatar').innerText = MY_NAME[0].toUpperCase();
-        
         if(isRoot()){
             document.getElementById('admin-badge').classList.remove('hidden');
-            document.getElementById('u-status').innerText = "ROOT COMMANDER";
+            document.getElementById('u-status').innerText = "SYSTEM OVERLORD";
         } else {
-            document.getElementById('u-status').innerText = "VERIFIED MEMBER";
+            document.getElementById('u-status').innerText = "VERIFIED IDENTITY";
         }
-
         document.getElementById('input').addEventListener('keypress', e => { if(e.key==='Enter') send(); });
-        
-        // Rooms Mock
-        const rooms = ['genel-sohbet', 'duyurular', 'kod-paylasim', 'sohbet-disi'];
-        const roomNav = document.getElementById('room-list');
-        rooms.forEach(r => {
-            roomNav.innerHTML += `
-                <div class="px-4 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${r === 'genel-sohbet' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'}">
-                    # ${r}
-                </div>
-            `;
-        });
-
         load();
     </script>
 </body>
