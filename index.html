@@ -2,141 +2,31 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>TERMINATOR V11 | ANTI-HACK</title>
+    <title>IMMORTAL V12 | GITHUB EDITION</title>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style>
-        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; user-select: none; }
-        .ban-ekrani { position: fixed; inset: 0; background: #000; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .mesaj { padding: 10px; border-bottom: 1px solid #111; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .admin-btn { padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right: 5px; font-weight: bold; }
-    </style>
 </head>
-<body oncontextmenu="return false;">
-
-    <div id="BAN-SCREEN" class="ban-ekrani">
-        <h1 style="font-size: 100px;">☣️</h1>
-        <h2 style="color: red; font-weight: bold;">CIHAZ KARALISTEYE ALINDI</h2>
-        <p style="color: #333;">F12 Manipülasyonu Tespit Edildi.</p>
-    </div>
-
-    <div class="flex h-full">
-        <aside class="w-64 bg-[#050505] border-r border-white/5 flex flex-col p-4">
-            <h1 class="font-black text-red-600 italic border-b border-red-600/20 pb-2 mb-4">V11 TERMINATOR</h1>
-            <div id="u-info" class="mt-auto p-3 bg-white/5 rounded">
-                <p id="u-name" class="text-xs font-bold text-gray-400">Yükleniyor...</p>
-                <p id="u-role" class="text-[9px] text-gray-600 uppercase">Doğrulanıyor</p>
-            </div>
+<body>
+    <div id="BAN-SCREEN"><h1>ERİŞİM REDDEDİLDİ</h1></div>
+    
+    <div class="main-container">
+        <aside id="sidebar">
+            <h2>V12 OVERLORD</h2>
+            <div id="user-box"></div>
         </aside>
-
-        <main class="flex-1 flex flex-col bg-[#020202]">
-            <div id="chat-flow" class="flex-1 overflow-y-auto p-6 space-y-2"></div>
-            <div class="p-4 border-t border-white/5 flex gap-2">
-                <input id="msg-input" type="text" placeholder="Mesaj gönder..." class="flex-1 bg-white/5 outline-none p-3 rounded text-sm">
-                <button onclick="send()" class="bg-red-700 px-6 rounded font-bold hover:bg-red-600">GÖNDER</button>
+        
+        <main id="chat-area">
+            <div id="messages"></div>
+            <div class="input-group">
+                <input id="msg-input" type="text" placeholder="Sisteme veri gönder...">
+                <button onclick="uiSend()">GÖNDER</button>
             </div>
         </main>
     </div>
 
-    <script>
-        // --- 1. GIZLI ADMIN ANAHTARI (Sadece senin bilmen gereken kısım) ---
-        // Alttaki 'GIZLI_ANAHTAR'ı istediğin bir şey yap. Sadece o anahtara sahip cihaz admin olur.
-        const GIZLI_ANAHTAR = "alper_123_safeguard"; 
-        const MY_NAME = localStorage.getItem('terminator_name') || "User_" + Math.floor(Math.random()*9999);
-        const IS_ROOT = (MY_NAME === "alper" && localStorage.getItem('admin_key') === GIZLI_ANAHTAR);
-
-        // --- 2. ANTI-F12 (TERMINATOR PROTOKOLÜ) ---
-        setInterval(() => {
-            const before = new Date().getTime();
-            debugger; // Eğer F12 açıksa tarayıcı burada takılır
-            const after = new Date().getTime();
-            if (after - before > 100) { 
-                // Eğer debugger geçildi ama süre uzunsa (F12 açık demektir)
-                document.body.innerHTML = "<h1>F12 TESPIT EDILDI. CIHAZ KILITLENDI.</h1>";
-                location.reload(); 
-            }
-        }, 100);
-
-        // F12, Ctrl+Shift+I, Ctrl+U engelleme
-        document.onkeydown = (e) => {
-            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
-                return false;
-            }
-        };
-
-        // --- 3. FIREBASE ---
-        const config = {
-            apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
-            authDomain: "trchat-7bc26.firebaseapp.com",
-            databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com",
-            projectId: "trchat-7bc26"
-        };
-        firebase.initializeApp(config);
-        const db = firebase.database();
-        const FPRINT = btoa(navigator.userAgent + screen.width).slice(0, 12);
-
-        // BAN KONTROL
-        db.ref(`bans/${FPRINT}`).on('value', s => { if(s.val()) document.getElementById('BAN-SCREEN').style.display = 'flex'; });
-
-        // --- 4. CHAT FONKSIYONLARI ---
-        function send() {
-            const val = document.getElementById('msg-input').value.trim();
-            if(!val) return;
-            db.ref('msgs/main').push({
-                f: FPRINT,
-                n: MY_NAME,
-                m: val,
-                r: IS_ROOT
-            });
-            document.getElementById('msg-input').value = '';
-        }
-
-        db.ref('msgs/main').on('value', snap => {
-            const flow = document.getElementById('chat-flow');
-            flow.innerHTML = '';
-            snap.forEach(c => {
-                const d = c.val();
-                const div = document.createElement('div');
-                div.className = "mesaj flex flex-col";
-                
-                let btns = (IS_ROOT && d.f !== FPRINT) ? `
-                    <div class="mt-1">
-                        <span onclick="termAction('kick', '${d.f}')" class="admin-btn bg-orange-600">AT</span>
-                        <span onclick="termAction('wipe', '${d.f}')" class="admin-btn bg-blue-600">SIL</span>
-                        <span onclick="termAction('ban', '${d.f}')" class="admin-btn bg-red-600">BAN</span>
-                    </div>
-                ` : '';
-
-                div.innerHTML = `
-                    <span class="text-[10px] font-bold ${d.r ? 'text-red-500' : 'text-gray-500'}">${d.n}</span>
-                    <span class="text-sm text-gray-300">${d.m}</span>
-                    ${btns}
-                `;
-                flow.appendChild(div);
-            });
-            flow.scrollTop = flow.scrollHeight;
-        });
-
-        window.termAction = (type, target) => {
-            if(!IS_ROOT) return;
-            if(type === 'ban') db.ref(`bans/${target}`).set(true);
-            if(type === 'kick') db.ref(`kicks/${target}`).set(Date.now());
-            if(type === 'wipe') {
-                db.ref('msgs/main').once('value', s => {
-                    s.forEach(c => { if(c.val().f === target) db.ref(`msgs/main/${c.key}`).remove(); });
-                });
-            }
-        };
-
-        // KICK DINLE
-        db.ref(`kicks/${FPRINT}`).on('value', s => { if(s.val()) location.reload(); });
-
-        // ADMIN GIRISI ICIN (Konsola şunu yazman lazım sadece 1 kere: localStorage.setItem('admin_key', 'alper_123_safeguard'))
-        document.getElementById('u-name').innerText = MY_NAME;
-        document.getElementById('u-role').innerText = IS_ROOT ? "OVERLORD" : "USER";
-        document.getElementById('msg-input').onkeypress = (e) => { if(e.key == 'Enter') send(); };
-    </script>
+    <script src="security.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
