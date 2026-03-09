@@ -3,60 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium TR-Chat</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <title>TR-Chat | Premium & Secure</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
+
     <div class="app-container">
-    <aside class="sidebar">
-        <div class="server-header">TR-CHAT CLONE</div>
-        <div class="channel-list" id="channelList">
-            <div class="channel active" onclick="switchChannel('genel')"># genel</div>
+        <aside class="sidebar">
+            <div class="server-name">
+                <i class="fas fa-shield-halved"></i> TR-Chat Pro
             </div>
-        <div class="user-panel">
-            <div class="user-info">
-                <span id="myNickDisplay">Yükleniyor...</span>
-                <button onclick="openSettings()"><i class="fas fa-cog"></i></button>
+            
+            <div class="channel-section">
+                <div class="section-title">METİN KANALLARI</div>
+                <div id="channelList">
+                    <div class="channel active" onclick="switchChannel('genel')">
+                        <i class="fas fa-hashtag"></i> genel
+                    </div>
+                </div>
             </div>
-        </div>
-    </aside>
 
-    <main class="chat-area">
-        <header class="chat-header">
-            <span id="currentChannelName"># genel</span>
-            <div class="header-tools">
-                <button onclick="createRoom()" title="Oda Oluştur"><i class="fas fa-plus"></i></button>
+            <div class="user-footer">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-meta">
+                    <span id="myNickDisplay" class="nick-text">Yükleniyor...</span>
+                    <span class="status">Çevrimiçi</span>
+                </div>
+                <button class="icon-btn" onclick="openSettings()"><i class="fas fa-cog"></i></button>
             </div>
-        </header>
-        <div id="messages"></div>
-        <div class="input-wrapper">
-            <input type="text" id="msgInput" placeholder="Mesaj gönder...">
-        </div>
-    </main>
-</div>
+        </aside>
 
-<div id="settingsModal" class="modal">
-    <div class="modal-content">
-        <h3>Profil Ayarları</h3>
-        <input type="text" id="newNick" placeholder="Yeni Nickname">
-        <button onclick="saveSettings()">Kaydet</button>
-        <button onclick="closeSettings()" class="close">Kapat</button>
+        <main class="chat-main">
+            <header class="chat-header">
+                <div class="header-info">
+                    <i class="fas fa-hashtag"></i>
+                    <h3 id="currentChannelName">genel</h3>
+                </div>
+                <div class="header-actions">
+                    <button class="action-btn" onclick="createRoom()" title="Oda Oluştur">
+                        <i class="fas fa-plus-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div id="messages" class="message-list">
+                </div>
+
+            <div class="input-container">
+                <div class="input-box">
+                    <button class="attach-btn"><i class="fas fa-circle-plus"></i></button>
+                    <input type="text" id="msgInput" placeholder="Mesaj gönder..." autocomplete="off">
+                    <div class="input-icons">
+                        <i class="fas fa-gift"></i>
+                        <i class="fas fa-sticky-note"></i>
+                        <i class="fas fa-face-smile"></i>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-</div>
-    <div class="chat-wrapper">
-        <header>
-            <h3><i class="fas fa-comments"></i> TR-Chat Premium</h3>
-            <span id="status-dot"></span>
-        </header>
-        <div id="chat-box"></div>
-        <div class="input-area">
-            <input type="text" id="username" placeholder="Nick..." maxlength="15">
-            <input type="text" id="messageInput" placeholder="Bir şeyler yazın...">
-            <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Profil Ayarları</h2>
+                <i class="fas fa-times" onclick="closeSettings()"></i>
+            </div>
+            <div class="modal-body">
+                <label>Nickname Değiştir</label>
+                <input type="text" id="newNick" placeholder="Yeni bir nick yazın...">
+                <button class="save-btn" onclick="saveSettings()">Değişiklikleri Kaydet</button>
+            </div>
         </div>
     </div>
+
     <script type="module" src="app.js"></script>
 </body>
 </html>
