@@ -1,80 +1,46 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>CYBER CORE CHAT</title>
-
-<link rel="stylesheet" href="style.css">
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+    <meta charset="UTF-8">
+    <title>CYBER-CHAT | V18.2 CLASSIC</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
-
 <body>
 
-<!-- LOGIN -->
+    <div id="auth-screen" class="overlay">
+        <div class="auth-box">
+            <h2>SİSTEME GİRİŞ</h2>
+            <input id="auth-email" type="email" placeholder="E-posta">
+            <input id="auth-user" type="text" placeholder="Kullanıcı Adı">
+            <input id="auth-pass" type="password" placeholder="Şifre">
+            <button onclick="handleAuth()">SİSTEMİ BAŞLAT</button>
+        </div>
+    </div>
 
-<div id="auth-screen">
+    <div id="BAN-SCREEN" class="overlay" style="display:none; color:red;">
+        <h1>ERİŞİM REDDEDİLDİ</h1>
+        <p>GÜVENLİK PROTOKOLÜ AKTİF.</p>
+    </div>
 
-<div class="login-card">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">CYBER-CHAT</div>
+            <div class="label">ODALAR</div>
+            <div id="room-list"></div>
+            <button class="add-room" onclick="createRoom()">+ ODA EKLE</button>
+        </aside>
 
-<h2>CYBER CORE</h2>
+        <main class="chat-area">
+            <div id="messages"></div>
+            <div class="input-container">
+                <input id="msg-input" type="text" placeholder="Mesajınızı buraya yazın...">
+                <button onclick="uiSend()">GÖNDER</button>
+            </div>
+        </main>
+    </div>
 
-<input id="auth-email" placeholder="email">
-<input id="auth-user" placeholder="kullanıcı adı">
-<input id="auth-pass" type="password" placeholder="şifre">
-
-<button onclick="handleAuth()">Giriş</button>
-
-</div>
-
-</div>
-
-<!-- CHAT -->
-
-<div id="chat-app">
-
-<aside class="sidebar">
-
-<div class="logo">CYBER</div>
-
-<div id="room-list">
-
-<div class="room-item active" onclick="switchRoom('genel')">
-# genel
-</div>
-
-</div>
-
-</aside>
-
-<main>
-
-<div class="chat-header">
-# <span id="active-room">genel</span>
-</div>
-
-<div id="messages"></div>
-
-<div class="input-area">
-
-<input id="msg-input" placeholder="mesaj yaz">
-
-<button onclick="sendMsg()">Gönder</button>
-
-</div>
-
-</main>
-
-</div>
-
-<script src="app.js"></script>
-
+    <script src="app.js"></script>
 </body>
 </html>
