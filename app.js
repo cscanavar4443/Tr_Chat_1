@@ -72,69 +72,30 @@ window.switchChannel = (roomID) => {
 function renderMessage(data, adminUID) {
     const isMe = data.uid === userUID;
     const isAdmin = data.uid === adminUID && currentRoom !== 'genel';
-    const verified = Security.generateHash(data.m) === data.h; // Hash kontrolü
 
-    const msgHtml = `
-        <div class="msg-item ${isMe ? 'msg-me' : ''}">
-            <div class="msg-content">
-                <span class="msg-author" style="color: ${isAdmin ? '#ed4245' : '#5865f2'}">
-                    ${data.u}
-                    ${isAdmin ? '<i class="fas fa-crown" title="Oda Sahibi"></i>' : ''}
-                </span>
-                <span class="msg-body">${data.m}</span>
-                ${verified ? '<i class="fas fa-check-circle verified" title="SHA-256 Doğrulandı"></i>' : ''}
-            </div>
-        </div>
-    `;
-    chatBox.insertAdjacentHTML('beforeend', msgHtml);
+    // 1. Bir ana kapsayıcı oluştur
+    const div = document.createElement('div');
+    div.className = `msg-item ${isMe ? 'msg-me' : ''}`;
+
+    // 2. Mesaj içeriği için elementler oluştur
+    const authorSpan = document.createElement('span');
+    authorSpan.className = 'msg-author';
+    // GÜVENLİK: textContent asla script çalıştırmaz!
+    authorSpan.textContent = data.u + (isAdmin ? ' 👑' : ''); 
+    authorSpan.style.color = isAdmin ? '#ed4245' : '#5865f2';
+
+    const bodySpan = document.createElement('span');
+    bodySpan.className = 'msg-body';
+    // GÜVENLİK: Buraya <script> gelse bile sadece yazı olarak görünür
+    bodySpan.textContent = data.m; 
+
+    // 3. Parçaları birleştir
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'msg-content';
+    contentDiv.appendChild(authorSpan);
+    contentDiv.appendChild(bodySpan);
+    
+    div.appendChild(contentDiv);
+    chatBox.appendChild(div);
     chatBox.scrollTop = chatBox.scrollHeight;
 }
-
-// Yeni Oda Oluşturma
-window.createRoom = () => {
-    const name = prompt("Oda ismi girin (örn: yazilim-sohbet):");
-    if (name) {
-        const id = name.toLowerCase().replace(/\s+/g, '-');
-        // Metadata oluştur (Oluşturan admin olur)
-        set(ref(db, `rooms/${id}/metadata`), {
-            admin: userUID,
-            name: name,
-            createdAt: Date.now()
-        });
-        // Kanal listesine ekle (Basitçe UI'ya ekliyoruz)
-        addChannelToUI(id);
-        switchChannel(id);
-    }
-};
-
-function addChannelToUI(id) {
-    const list = document.getElementById('channelList');
-    const div = document.createElement('div');
-    div.className = 'channel';
-    div.innerText = `# ${id}`;
-    div.onclick = () => switchChannel(id);
-    list.appendChild(div);
-}
-
-// --- 4. EVENT LISTENERS ---
-
-msgInput.onkeypress = (e) => {
-    if (e.key === 'Enter') {
-        sendMessage(e.target.value);
-        e.target.value = "";
-    }
-};
-
-// Ayarları Kaydet
-window.saveSettings = () => {
-    const nick = document.getElementById('newNick').value.trim();
-    if (nick) {
-        currentUser = nick;
-        localStorage.setItem('chatNick', nick);
-        document.getElementById('myNickDisplay').innerText = nick;
-        window.closeSettings();
-    }
-};
-
-// Uygulamayı Başlat
-switchChannel('genel');
