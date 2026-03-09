@@ -1,6 +1,25 @@
-<div id="chat-container">
-  <div id="messages"></div>
-  <input type="text" id="username" placeholder="Adınız...">
-  <input type="text" id="messageInput" placeholder="Mesajınızı yazın...">
-  <button onclick="sendMessage()">Gönder</button>
-</div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium TR-Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="chat-wrapper">
+        <header>
+            <h3><i class="fas fa-comments"></i> TR-Chat Premium</h3>
+            <span id="status-dot"></span>
+        </header>
+        <div id="chat-box"></div>
+        <div class="input-area">
+            <input type="text" id="username" placeholder="Nick..." maxlength="15">
+            <input type="text" id="messageInput" placeholder="Bir şeyler yazın...">
+            <button id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
