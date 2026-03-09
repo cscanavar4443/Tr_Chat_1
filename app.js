@@ -21,17 +21,20 @@ localStorage.setItem('userUID', userUID);
 const chatBox = document.getElementById('messages');
 const msgInput = document.getElementById('msgInput');
 const currentRoomTitle = document.getElementById('currentChannelName');
-document.getElementById('myNickDisplay').innerText = currentUser;
+const nickDisplay = document.getElementById('myNickDisplay');
+
+if (nickDisplay) nickDisplay.textContent = currentUser;
 
 // --- 3. CORE FUNCTIONS ---
 
-// Mesaj Gönderimi (XSS & SHA-256 Korumalı)
+// Mesaj Gönderimi
 window.sendMessage = (text) => {
-    if (!text.trim()) return;
+    if (!text || !text.trim()) return;
 
+    // Göndermeden önce temizlik (XSS Koruması)
     const cleanText = Security.sanitize(text);
     const filteredText = Security.filterBadWords(cleanText);
-    const hash = Security.generateHash(filteredText); // SHA-256 koruması
+    const hash = Security.generateHash(filteredText);
 
     const roomRef = ref(db, `rooms/${currentRoom}/messages`);
     push(roomRef, {
@@ -43,59 +46,95 @@ window.sendMessage = (text) => {
     });
 };
 
-// Oda Değiştirme ve Dinleme
+// Güvenli Mesaj Oluşturma (innerHTML YOK, Sadece textContent)
+function renderMessage(data, adminUID) {
+    const isMe = data.uid === userUID;
+    const isAdmin = data.uid === adminUID && currentRoom !== 'genel';
+
+    // Ana Kap (div)
+    const div = document.createElement('div');
+    div.className = `msg-item ${isMe ? 'msg-me' : ''}`;
+
+    // İçerik Kutusu
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'msg-content';
+
+    // Kullanıcı Adı
+    const authorSpan = document.createElement('span');
+    authorSpan.className = 'msg-author';
+    authorSpan.textContent = data.u + (isAdmin ? ' 👑' : ''); // Kod olarak değil metin olarak basar
+    authorSpan.style.color = isAdmin ? '#ed4245' : '#5865f2';
+
+    // Mesaj Gövdesi
+    const bodySpan = document.createElement('span');
+    bodySpan.className = 'msg-body';
+    bodySpan.textContent = data.m; // <--- BURASI KRİTİK: XSS'İ BURADA ÖLDÜRÜYORUZ
+
+    // Zaman (Küçük yazı)
+    const timeSpan = document.createElement('small');
+    timeSpan.style.display = 'block';
+    timeSpan.style.fontSize = '10px';
+    timeSpan.style.opacity = '0.5';
+    timeSpan.textContent = new Date(data.t).toLocaleTimeString();
+
+    // Birleştirme
+    contentDiv.appendChild(authorSpan);
+    contentDiv.appendChild(bodySpan);
+    contentDiv.appendChild(timeSpan);
+    div.appendChild(contentDiv);
+    
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Oda Değiştirme
 window.switchChannel = (roomID) => {
-    // Eski dinleyiciyi durdur ve ekranı temizle
-    off(ref(db, `rooms/${currentRoom}/messages`));
-    chatBox.innerHTML = "";
+    off(ref(db, `rooms/${currentRoom}/messages`)); // Eski odayı dinlemeyi bırak
+    chatBox.textContent = ""; // Mesaj alanını temizle
     currentRoom = roomID;
-    currentRoomTitle.innerText = `# ${roomID}`;
+    currentRoomTitle.textContent = `# ${roomID}`;
 
-    // Aktif kanal görselini güncelle
-    document.querySelectorAll('.channel').forEach(el => el.classList.remove('active'));
-    // (Eğer listede varsa active class ekle)
-
-    // Odanın adminini çek
     let roomAdmin = "";
     onValue(ref(db, `rooms/${roomID}/metadata/admin`), (snapshot) => {
         roomAdmin = snapshot.val();
     });
 
-    // Yeni mesajları dinle
     onChildAdded(ref(db, `rooms/${roomID}/messages`), (snap) => {
-        const data = snap.val();
-        renderMessage(data, roomAdmin);
+        renderMessage(snap.val(), roomAdmin);
     });
 };
 
-// Mesajı Ekrana Bas (Admin Kontrolü ile)
-function renderMessage(data, adminUID) {
-    const isMe = data.uid === userUID;
-    const isAdmin = data.uid === adminUID && currentRoom !== 'genel';
+// Oda Oluşturma
+window.createRoom = () => {
+    const name = prompt("Yeni oda adı:");
+    if (name) {
+        const id = name.toLowerCase().replace(/\s+/g, '-');
+        set(ref(db, `rooms/${id}/metadata`), {
+            admin: userUID,
+            name: name
+        });
+        window.switchChannel(id);
+    }
+};
 
-    // 1. Bir ana kapsayıcı oluştur
-    const div = document.createElement('div');
-    div.className = `msg-item ${isMe ? 'msg-me' : ''}`;
+// --- 4. EVENT LISTENERS ---
+msgInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        window.sendMessage(msgInput.value);
+        msgInput.value = "";
+    }
+});
 
-    // 2. Mesaj içeriği için elementler oluştur
-    const authorSpan = document.createElement('span');
-    authorSpan.className = 'msg-author';
-    // GÜVENLİK: textContent asla script çalıştırmaz!
-    authorSpan.textContent = data.u + (isAdmin ? ' 👑' : ''); 
-    authorSpan.style.color = isAdmin ? '#ed4245' : '#5865f2';
+// Ayarları Kaydet
+window.saveSettings = () => {
+    const newNick = document.getElementById('newNick').value.trim();
+    if (newNick) {
+        currentUser = newNick;
+        localStorage.setItem('chatNick', newNick);
+        if (nickDisplay) nickDisplay.textContent = newNick;
+        document.getElementById('settingsModal').style.display = 'none';
+    }
+};
 
-    const bodySpan = document.createElement('span');
-    bodySpan.className = 'msg-body';
-    // GÜVENLİK: Buraya <script> gelse bile sadece yazı olarak görünür
-    bodySpan.textContent = data.m; 
-
-    // 3. Parçaları birleştir
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'msg-content';
-    contentDiv.appendChild(authorSpan);
-    contentDiv.appendChild(bodySpan);
-    
-    div.appendChild(contentDiv);
-    chatBox.appendChild(div);
-    chatBox.scrollTop = chatBox.scrollHeight;
-}
+// İlk Başlatma
+window.switchChannel('genel');
