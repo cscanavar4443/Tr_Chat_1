@@ -1,0 +1,180 @@
+/* Ana Renk Paleti ve Değişkenler */
+:root {
+    --bg-main: #050505;
+    --bg-card: rgba(15, 15, 20, 0.8);
+    --accent: #6366f1; /* Indigo */
+    --accent-glow: rgba(99, 102, 241, 0.3);
+    --danger: #f43f5e;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border: rgba(255, 255, 255, 0.05);
+}
+
+/* Sayfa Ayarları */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+/* GitHub Pages'e yüklediğinde bu görsel yapı hayat bulacak */
+.main-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+/* Sol Panel (Sidebar) */
+#sidebar {
+    width: 280px;
+    background: #080808;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+}
+
+#sidebar h2 {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--accent);
+    margin-bottom: 40px;
+    text-transform: uppercase;
+}
+
+/* Sohbet Alanı */
+#chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle at top right, #0a0a0f, #050505);
+}
+
+/* Mesajlar Akış Alanı */
+#messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Mesaj Baloncukları */
+.msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.msg:hover {
+    border-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+/* Root/Admin Mesajı Farkı */
+.msg.root {
+    border-left: 3px solid var(--danger);
+    background: rgba(244, 63, 94, 0.05);
+}
+
+.msg b {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    color: var(--accent);
+}
+
+.msg.root b { color: var(--danger); }
+
+/* Giriş Alanı (Input Group) */
+.input-group {
+    padding: 24px 30px;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+}
+
+#msg-input {
+    flex: 1;
+    background: #0f1115;
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    border-radius: 10px;
+    color: white;
+    outline: none;
+    transition: 0.3s;
+}
+
+#msg-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 0 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
+
+/* Ban Butonu (Admin için) */
+.ban-btn {
+    background: var(--danger);
+    font-size: 9px;
+    padding: 2px 6px;
+    margin-left: 10px;
+    border-radius: 4px;
+    opacity: 0.6;
+}
+
+.ban-btn:hover { opacity: 1; }
+
+/* Ban Ekranı Animasyonu */
+#BAN-SCREEN {
+    position: fixed;
+    inset: 0;
+    background: black;
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--danger);
+    font-weight: 900;
+    letter-spacing: 10px;
+}
+
+/* Scrollbar (Zarif ve ince) */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
