@@ -2,202 +2,141 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CYBER FORTRESS V8 | OVERLORD</title>
+    <title>TERMINATOR V11 | ANTI-HACK</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
     <style>
-        :root { --primary: #6366f1; --accent: #f43f5e; --bg-dark: #09090b; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: #fafafa; overflow: hidden; height: 100vh; }
-        .glass { background: rgba(15, 15, 20, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.05); }
-        
-        /* Ban & Kick Overlays */
-        .system-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 999999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(50px); }
-        
-        /* Authority Menu Animation */
-        .auth-tools { opacity: 0; transform: translateX(-10px); transition: 0.3s; pointer-events: none; }
-        .msg-card:hover .auth-tools { opacity: 1; transform: translateX(0); pointer-events: auto; }
-
-        .btn-tool { padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; transition: 0.2s; cursor: pointer; }
-        .btn-kick { background: #f59e0b; color: #000; }
-        .btn-wipe { background: #6366f1; color: #fff; }
-        .btn-ban { background: #ef4444; color: #fff; }
-
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .banned-glow { animation: pulse-red 2s infinite; }
+        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; user-select: none; }
+        .ban-ekrani { position: fixed; inset: 0; background: #000; z-index: 99999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .mesaj { padding: 10px; border-bottom: 1px solid #111; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .admin-btn { padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; margin-right: 5px; font-weight: bold; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="HARD-BAN" class="system-overlay">
-        <div class="text-center p-12 glass rounded-3xl border-red-500/20 banned-glow">
-            <h1 class="text-6xl mb-6">🚫</h1>
-            <h2 class="text-3xl font-black text-red-500 mb-2 uppercase tracking-tighter">Cihaz İmha Edildi</h2>
-            <p class="text-gray-500 font-mono text-xs uppercase tracking-widest">Access Denied: Permanent Blacklist.</p>
-        </div>
+    <div id="BAN-SCREEN" class="ban-ekrani">
+        <h1 style="font-size: 100px;">☣️</h1>
+        <h2 style="color: red; font-weight: bold;">CIHAZ KARALISTEYE ALINDI</h2>
+        <p style="color: #333;">F12 Manipülasyonu Tespit Edildi.</p>
     </div>
 
-    <div id="KICK-SCREEN" class="system-overlay">
-        <div class="text-center p-12 glass rounded-3xl border-amber-500/20">
-            <h1 class="text-6xl mb-6">👢</h1>
-            <h2 class="text-3xl font-black text-amber-500 mb-2 uppercase tracking-tighter">Odadan Atıldın</h2>
-            <button onclick="location.reload()" class="mt-4 px-6 py-2 bg-amber-500 text-black font-bold rounded-lg text-xs">YENİDEN BAĞLAN</button>
-        </div>
-    </div>
-
-    <div class="flex h-full w-full p-4 gap-4">
-        <aside class="w-80 flex flex-col gap-4">
-            <div class="glass rounded-2xl p-6">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-bold italic shadow-lg shadow-indigo-500/20 text-white">V8</div>
-                    <div>
-                        <h1 class="font-bold tracking-tight">OVERLORD <span class="text-indigo-500">SESSION</span></h1>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-black">Full Control Active</p>
-                    </div>
-                </div>
-                <div id="room-list" class="space-y-1"></div>
-            </div>
-            <div class="glass rounded-2xl p-4 mt-auto">
-                <div class="flex items-center gap-4">
-                    <div id="u-avatar" class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white shadow-xl">?</div>
-                    <div class="flex-1 min-w-0">
-                        <p id="u-name" class="font-semibold truncate">...</p>
-                        <p id="u-status" class="text-[10px] font-bold text-indigo-400 uppercase tracking-tight">Yükleniyor</p>
-                    </div>
-                </div>
+    <div class="flex h-full">
+        <aside class="w-64 bg-[#050505] border-r border-white/5 flex flex-col p-4">
+            <h1 class="font-black text-red-600 italic border-b border-red-600/20 pb-2 mb-4">V11 TERMINATOR</h1>
+            <div id="u-info" class="mt-auto p-3 bg-white/5 rounded">
+                <p id="u-name" class="text-xs font-bold text-gray-400">Yükleniyor...</p>
+                <p id="u-role" class="text-[9px] text-gray-600 uppercase">Doğrulanıyor</p>
             </div>
         </aside>
 
-        <main class="flex-1 flex flex-col glass rounded-2xl overflow-hidden relative">
-            <header class="h-20 px-8 flex items-center justify-between border-b border-white/5 bg-white/5">
-                <div>
-                    <h2 id="room-title" class="font-bold text-lg"># genel-sohbet</h2>
-                    <p class="text-[10px] text-gray-500 font-medium">Yönetim Modu: Aktif</p>
-                </div>
-                <div id="admin-badge" class="hidden px-4 py-1.5 bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-bold rounded-full tracking-widest uppercase">Overlord Access</div>
-            </header>
-
-            <div id="chat-flow" class="flex-1 overflow-y-auto p-8 space-y-6"></div>
-
-            <div class="p-6 bg-white/5 border-t border-white/5">
-                <div class="max-w-4xl mx-auto flex items-center gap-4 glass rounded-2xl p-2 focus-within:ring-2 ring-indigo-500/20 transition-all">
-                    <input id="input" type="text" placeholder="Komut veya mesaj gönder..." class="flex-1 bg-transparent border-none outline-none px-4 text-sm py-3 text-gray-200">
-                    <button onclick="send()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95">GÖNDER</button>
-                </div>
+        <main class="flex-1 flex flex-col bg-[#020202]">
+            <div id="chat-flow" class="flex-1 overflow-y-auto p-6 space-y-2"></div>
+            <div class="p-4 border-t border-white/5 flex gap-2">
+                <input id="msg-input" type="text" placeholder="Mesaj gönder..." class="flex-1 bg-white/5 outline-none p-3 rounded text-sm">
+                <button onclick="send()" class="bg-red-700 px-6 rounded font-bold hover:bg-red-600">GÖNDER</button>
             </div>
         </main>
     </div>
 
     <script>
-        const getEliteID = () => {
-            const keys = [navigator.userAgent, navigator.language, screen.width + "x" + screen.height, navigator.platform, navigator.hardwareConcurrency];
-            const str = keys.join('::');
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
-            return 'OVR-' + Math.abs(hash).toString(16).toUpperCase();
+        // --- 1. GIZLI ADMIN ANAHTARI (Sadece senin bilmen gereken kısım) ---
+        // Alttaki 'GIZLI_ANAHTAR'ı istediğin bir şey yap. Sadece o anahtara sahip cihaz admin olur.
+        const GIZLI_ANAHTAR = "alper_123_safeguard"; 
+        const MY_NAME = localStorage.getItem('terminator_name') || "User_" + Math.floor(Math.random()*9999);
+        const IS_ROOT = (MY_NAME === "alper" && localStorage.getItem('admin_key') === GIZLI_ANAHTAR);
+
+        // --- 2. ANTI-F12 (TERMINATOR PROTOKOLÜ) ---
+        setInterval(() => {
+            const before = new Date().getTime();
+            debugger; // Eğer F12 açıksa tarayıcı burada takılır
+            const after = new Date().getTime();
+            if (after - before > 100) { 
+                // Eğer debugger geçildi ama süre uzunsa (F12 açık demektir)
+                document.body.innerHTML = "<h1>F12 TESPIT EDILDI. CIHAZ KILITLENDI.</h1>";
+                location.reload(); 
+            }
+        }, 100);
+
+        // F12, Ctrl+Shift+I, Ctrl+U engelleme
+        document.onkeydown = (e) => {
+            if (e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73) || (e.ctrlKey && e.keyCode == 85)) {
+                return false;
+            }
         };
 
-        const DEVICE_ID = getEliteID();
-        let MY_NAME = localStorage.getItem('v6_name') || "User_" + DEVICE_ID.slice(-4);
-        let CURRENT_ROOM = "genel";
-
-        const firebaseConfig = {
+        // --- 3. FIREBASE ---
+        const config = {
             apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
             authDomain: "trchat-7bc26.firebaseapp.com",
             databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com",
             projectId: "trchat-7bc26"
         };
-        firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(config);
         const db = firebase.database();
+        const FPRINT = btoa(navigator.userAgent + screen.width).slice(0, 12);
 
-        const isRoot = () => MY_NAME.toLowerCase() === "alper";
+        // BAN KONTROL
+        db.ref(`bans/${FPRINT}`).on('value', s => { if(s.val()) document.getElementById('BAN-SCREEN').style.display = 'flex'; });
 
-        // BAN & KICK CONTROLS
-        db.ref(`hard_bans/${DEVICE_ID}`).on('value', snap => { if(snap.val()) document.getElementById('HARD-BAN').style.display = 'flex'; });
-        db.ref(`kicks/${DEVICE_ID}`).on('value', snap => { 
-            if(snap.val()) {
-                document.getElementById('KICK-SCREEN').style.display = 'flex';
-                db.ref(`kicks/${DEVICE_ID}`).remove(); // Otomatik sıfırla ki tekrar girebilsin
-            }
+        // --- 4. CHAT FONKSIYONLARI ---
+        function send() {
+            const val = document.getElementById('msg-input').value.trim();
+            if(!val) return;
+            db.ref('msgs/main').push({
+                f: FPRINT,
+                n: MY_NAME,
+                m: val,
+                r: IS_ROOT
+            });
+            document.getElementById('msg-input').value = '';
+        }
+
+        db.ref('msgs/main').on('value', snap => {
+            const flow = document.getElementById('chat-flow');
+            flow.innerHTML = '';
+            snap.forEach(c => {
+                const d = c.val();
+                const div = document.createElement('div');
+                div.className = "mesaj flex flex-col";
+                
+                let btns = (IS_ROOT && d.f !== FPRINT) ? `
+                    <div class="mt-1">
+                        <span onclick="termAction('kick', '${d.f}')" class="admin-btn bg-orange-600">AT</span>
+                        <span onclick="termAction('wipe', '${d.f}')" class="admin-btn bg-blue-600">SIL</span>
+                        <span onclick="termAction('ban', '${d.f}')" class="admin-btn bg-red-600">BAN</span>
+                    </div>
+                ` : '';
+
+                div.innerHTML = `
+                    <span class="text-[10px] font-bold ${d.r ? 'text-red-500' : 'text-gray-500'}">${d.n}</span>
+                    <span class="text-sm text-gray-300">${d.m}</span>
+                    ${btns}
+                `;
+                flow.appendChild(div);
+            });
+            flow.scrollTop = flow.scrollHeight;
         });
 
-        const send = () => {
-            const inp = document.getElementById('input');
-            if(!inp.value.trim()) return;
-            db.ref('msgs').child(CURRENT_ROOM).push({
-                fprint: DEVICE_ID,
-                name: MY_NAME,
-                text: inp.value.trim(),
-                ts: Date.now(),
-                role: isRoot() ? 'admin' : 'user'
-            });
-            inp.value = '';
-        };
-
-        const load = () => {
-            const flow = document.getElementById('chat-flow');
-            db.ref('msgs').child(CURRENT_ROOM).on('value', snap => {
-                flow.innerHTML = '';
-                snap.forEach(child => {
-                    const m = child.val();
-                    const key = child.key;
-                    const isMe = m.fprint === DEVICE_ID;
-                    const card = document.createElement('div');
-                    card.className = `msg-card flex gap-4 ${isMe ? 'flex-row-reverse text-right' : ''}`;
-                    
-                    const tools = (isRoot() && !isMe) ? `
-                        <div class="auth-tools flex gap-1 mt-2">
-                            <div onclick="kickUser('${m.fprint}')" class="btn-tool btn-kick">Kick</div>
-                            <div onclick="wipeUser('${m.fprint}')" class="btn-tool btn-wipe">Wipe</div>
-                            <div onclick="banUser('${m.fprint}')" class="btn-tool btn-ban">Ban</div>
-                        </div>
-                    ` : '';
-
-                    card.innerHTML = `
-                        <div class="shrink-0">
-                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center font-bold text-xs border border-white/10">${m.name[0]}</div>
-                        </div>
-                        <div class="max-w-[70%]">
-                            <span class="text-[10px] font-black uppercase tracking-widest ${m.role==='admin'?'text-red-500':'text-gray-500'}">${m.name}</span>
-                            <div class="px-4 py-2 bg-white/5 border border-white/5 rounded-2xl text-sm text-gray-200 mt-1">${m.text}</div>
-                            ${tools}
-                        </div>
-                    `;
-                    flow.appendChild(card);
-                });
-                flow.scrollTop = flow.scrollHeight;
-            });
-        };
-
-        // --- OVERLORD COMMANDS ---
-        window.kickUser = (id) => { if(confirm("Odadan atılsın mı?")) db.ref('kicks').child(id).set(true); };
-        
-        window.banUser = (id) => { if(confirm("BU CIHAZI EBEDIYEN YASAKLA?")) db.ref('hard_bans').child(id).set({at: Date.now()}); };
-        
-        window.wipeUser = (id) => {
-            if(confirm("BU KULLANICININ TÜM MESAJLARI SİLİNSİN Mİ?")) {
-                db.ref('msgs').child(CURRENT_ROOM).once('value', snap => {
-                    snap.forEach(child => {
-                        if(child.val().fprint === id) db.ref('msgs').child(CURRENT_ROOM).child(child.key).remove();
-                    });
+        window.termAction = (type, target) => {
+            if(!IS_ROOT) return;
+            if(type === 'ban') db.ref(`bans/${target}`).set(true);
+            if(type === 'kick') db.ref(`kicks/${target}`).set(Date.now());
+            if(type === 'wipe') {
+                db.ref('msgs/main').once('value', s => {
+                    s.forEach(c => { if(c.val().f === target) db.ref(`msgs/main/${c.key}`).remove(); });
                 });
             }
         };
 
-        // SETUP
+        // KICK DINLE
+        db.ref(`kicks/${FPRINT}`).on('value', s => { if(s.val()) location.reload(); });
+
+        // ADMIN GIRISI ICIN (Konsola şunu yazman lazım sadece 1 kere: localStorage.setItem('admin_key', 'alper_123_safeguard'))
         document.getElementById('u-name').innerText = MY_NAME;
-        document.getElementById('u-avatar').innerText = MY_NAME[0].toUpperCase();
-        if(isRoot()){
-            document.getElementById('admin-badge').classList.remove('hidden');
-            document.getElementById('u-status').innerText = "SYSTEM OVERLORD";
-        } else {
-            document.getElementById('u-status').innerText = "VERIFIED IDENTITY";
-        }
-        document.getElementById('input').addEventListener('keypress', e => { if(e.key==='Enter') send(); });
-        load();
+        document.getElementById('u-role').innerText = IS_ROOT ? "OVERLORD" : "USER";
+        document.getElementById('msg-input').onkeypress = (e) => { if(e.key == 'Enter') send(); };
     </script>
 </body>
 </html>
