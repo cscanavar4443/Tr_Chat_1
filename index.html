@@ -2,41 +2,53 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>CYBER-CHAT | V18.2 CLASSIC</title>
+    <title>CYBER-CORE V19 | PREMIUM</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
-    <div id="auth-screen" class="overlay">
-        <div class="auth-box">
-            <h2>SİSTEME GİRİŞ</h2>
-            <input id="auth-email" type="email" placeholder="E-posta">
-            <input id="auth-user" type="text" placeholder="Kullanıcı Adı">
-            <input id="auth-pass" type="password" placeholder="Şifre">
-            <button onclick="handleAuth()">SİSTEMİ BAŞLAT</button>
+    <div id="auth-screen" class="gate-overlay">
+        <div class="premium-box">
+            <h1 class="neon-text">CYBER-CORE</h1>
+            <div class="input-group">
+                <input id="auth-email" type="email" placeholder="E-POSTA">
+                <input id="auth-user" type="text" placeholder="KULLANICI ADI">
+                <input id="auth-pass" type="password" placeholder="ŞİFRE">
+            </div>
+            <button onclick="handleAuth()" class="neon-btn">ERİŞİM SAĞLA</button>
         </div>
     </div>
 
-    <div id="BAN-SCREEN" class="overlay" style="display:none; color:red;">
-        <h1>ERİŞİM REDDEDİLDİ</h1>
-        <p>GÜVENLİK PROTOKOLÜ AKTİF.</p>
+    <div id="BAN-SCREEN" class="gate-overlay" style="display:none;">
+        <div class="premium-box border-red">
+            <h1 class="red-neon">SİSTEMDEN MEN EDİLDİN</h1>
+            <p id="ban-reason">PROTOKOL İHLALİ</p>
+        </div>
     </div>
 
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="logo">CYBER-CHAT</div>
-            <div class="label">ODALAR</div>
-            <div id="room-list"></div>
-            <button class="add-room" onclick="createRoom()">+ ODA EKLE</button>
+    <div class="app-layout">
+        <aside class="side-panel">
+            <div class="panel-brand">V19 <span class="dot">.</span></div>
+            <div class="nav-label">KANALLAR</div>
+            <div id="room-list" class="room-nav"></div>
+            <button class="create-room-btn" onclick="createRoom()">+ YENİ KANAL</button>
         </aside>
 
-        <main class="chat-area">
-            <div id="messages"></div>
-            <div class="input-container">
-                <input id="msg-input" type="text" placeholder="Mesajınızı buraya yazın...">
-                <button onclick="uiSend()">GÖNDER</button>
+        <main class="chat-main">
+            <header class="chat-top">
+                <span id="active-room-name"># genel</span>
+                <div class="status-indicator">SİSTEM AKTİF</div>
+            </header>
+
+            <div id="messages" class="scroll-v"></div>
+
+            <div class="chat-bottom">
+                <div class="input-wrap">
+                    <input id="msg-input" type="text" placeholder="Komut veya mesaj girin...">
+                    <button onclick="uiSend()" class="send-icon">▲</button>
+                </div>
             </div>
         </main>
     </div>
