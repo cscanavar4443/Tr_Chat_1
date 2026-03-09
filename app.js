@@ -1,47 +1,45 @@
-const firebaseConfig = {
-    apiKey: "AIzaSyBpCLRiS8pHlTgvVmNLH92u3VszvT25xPs",
-    databaseURL: "https://trchat-7bc26-default-rtdb.firebaseio.com",
-    projectId: "trchat-7bc26"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-// Ban Kontrolü
-db.ref(`blacklist/${SECURITY_ID}`).on('value', s => {
-    if(s.val()) document.getElementById('BAN-SCREEN').style.display = 'flex';
-});
-
-// Mesaj Gönderme
-function uiSend() {
-    const input = document.getElementById('msg-input');
-    if(!input.value) return;
-    
-    db.ref('chat/global').push({
-        id: SECURITY_ID,
-        name: isOverlord() ? "ALPER [ROOT]" : "User_" + SECURITY_ID.slice(-3),
-        text: input.value,
-        isRoot: isOverlord()
-    });
-    input.value = '';
-}
-
-// Mesajları Listele (Hızlı Render)
+// Mesajları Listeleme ve Efektler
 db.ref('chat/global').on('value', snap => {
     const box = document.getElementById('messages');
     box.innerHTML = '';
     snap.forEach(child => {
         const d = child.val();
-        const btn = (isOverlord() && d.id !== SECURITY_ID) ? 
-            `<button onclick="banUser('${d.id}')" class="ban-btn">BAN</button>` : '';
+        const isMeAdmin = localStorage.getItem('access_token') === ADMIN_SECRET;
+        
+        // Admin mesajıysa altın sarısı parlama, normalse indigo parlama
+        const glowClass = d.isRoot ? 'admin-glow' : 'user-glow';
+        
+        // Yetki butonları (Sadece sana görünür)
+        let authButtons = '';
+        if (isMeAdmin && d.id !== MY_ID) {
+            authButtons = `
+                <div class="auth-actions">
+                    <button onclick="banUser('${d.id}')" class="btn-ban">BAN</button>
+                    <button onclick="unbanUser('${d.id}')" class="btn-unban">BAN KALDIR</button>
+                </div>
+            `;
+        }
         
         box.innerHTML += `
-            <div class="msg ${d.isRoot ? 'root' : ''}">
-                <b>${d.name}:</b> ${d.text} ${btn}
+            <div class="msg ${glowClass} ${d.isRoot ? 'root-style' : ''}">
+                <b class="${d.isRoot ? 'text-red-500' : 'text-indigo-400'}">${d.name}</b>
+                <p>${d.text}</p>
+                ${authButtons}
             </div>`;
     });
     box.scrollTop = box.scrollHeight;
 });
 
+// --- YÖNETİCİ FONKSİYONLARI ---
 function banUser(target) {
-    if(confirm("Kalıcı olarak banla?")) db.ref(`blacklist/${target}`).set(true);
+    if(confirm("Bu kullanıcıyı sistemden siliyor musun?")) {
+        db.ref(`blacklist/${target}`).set(true);
+    }
+}
+
+function unbanUser(target) {
+    if(confirm("Bu kullanıcının engelini kaldırmak istediğine emin misin?")) {
+        db.ref(`blacklist/${target}`).remove()
+        .then(() => alert("Kullanıcının engeli kaldırıldı."));
+    }
 }
